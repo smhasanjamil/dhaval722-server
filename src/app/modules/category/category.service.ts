@@ -18,6 +18,23 @@ const createCategoryIntoDB = async (payload: ICategory) => {
   return result;
 };
 
+// Get All Categories From DB
+const getAllCategoriesFromDB = async () => {
+  const categories = await CategoryModel.find().sort({ createdAt: -1 });
+  return categories;
+};
+
+// Get Single Category From DB
+const getSingleCategoryFromDB = async (categoryId: string) => {
+  const category = await CategoryModel.findById(categoryId);
+
+  if (!category) {
+    throw new AppError(status.NOT_FOUND, "Category not found");
+  }
+
+  return category;
+};
+
 // Update a category in the database
 const updateCategoryInDB = async (
   categoryId: string,
@@ -36,4 +53,6 @@ const updateCategoryInDB = async (
 export const CategoryService = {
   createCategoryIntoDB,
   updateCategoryInDB,
+  getAllCategoriesFromDB,
+  getSingleCategoryFromDB,
 };
