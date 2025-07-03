@@ -6,6 +6,7 @@ import AppError from "../errors/AppError";
 // import { TUserRole } from "../modules/User/user.interface";
 import catchAsync from "../utils/catchAsync";
 import config from "../config";
+import { UserModel } from "../modules/user/user.model";
 
 
 
@@ -18,7 +19,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
       throw new AppError(httpStatus.UNAUTHORIZED, "No authorization token provided");
     }
     if (token.startsWith("Bearer ")) {
-      token = token.slice(7); // Remove "Bearer " prefix
+      token = token.slice(7);
     }
 
     // Verify token
@@ -35,12 +36,12 @@ const auth = (...requiredRoles: TUserRole[]) => {
       throw new AppError(httpStatus.UNAUTHORIZED, "Token verification failed");
     }
 
-    const { role, userEmail } = decoded;
+    const { role, email } = decoded;
 
     console.log("decoded in auth: ",decoded)
  
     // Check if user exists
-    const user = await User.findOne({ userEmail: userEmail }).select("+userPassword");
+    const user = await UserModel.findOne({ email }).select("+password");
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, "User not found");
     }

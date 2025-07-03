@@ -1,0 +1,1 @@
+type TUserRole = "admin" | "superAdmin";
