@@ -18,7 +18,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Server is running!");
 });
 
-app.use(globalErrorHandler);
+// app.use(globalErrorHandler);
 
 
 

@@ -3,10 +3,10 @@ import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import jwt, { JwtPayload, TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
 import AppError from "../errors/AppError";
-import { TUserRole } from "../modules/User/user.interface";
+// import { TUserRole } from "../modules/User/user.interface";
 import catchAsync from "../utils/catchAsync";
-import { User } from "../modules/User/user.model";
 import config from "../config";
+
 
 
 const auth = (...requiredRoles: TUserRole[]) => {
