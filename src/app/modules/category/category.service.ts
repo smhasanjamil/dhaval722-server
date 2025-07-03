@@ -2,6 +2,7 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { ICategory } from "./category.interface";
 import { CategoryModel } from "./category.model";
+import { ProductModel } from "../product/product.model";
 
 // Insert category into database
 const createCategoryIntoDB = async (payload: ICategory) => {
@@ -50,9 +51,31 @@ const updateCategoryInDB = async (
   });
 };
 
+// Delete a category from the database
+const deleteCategoryFromDB = async (id: string) => {
+  // Check if category exists
+  const category = await CategoryModel.findById(id);
+  if (!category) {
+    throw new AppError(status.NOT_FOUND, "Category not found");
+  }
+
+  // Check if any product is using this category
+  const relatedProducts = await ProductModel.findOne({ categoryId: id });
+  if (relatedProducts) {
+    throw new AppError(
+      status.CONFLICT,
+      "Cannot delete category: products exist in this category"
+    );
+  }
+
+  const deleted = await CategoryModel.findByIdAndDelete(id);
+  return deleted;
+};
+
 export const CategoryService = {
   createCategoryIntoDB,
   updateCategoryInDB,
   getAllCategoriesFromDB,
   getSingleCategoryFromDB,
+  deleteCategoryFromDB,
 };
