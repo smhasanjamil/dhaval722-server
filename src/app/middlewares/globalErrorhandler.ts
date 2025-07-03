@@ -2,13 +2,13 @@
 /* eslint-disable no-unused-vars */
 import { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import config from '../../config';
 import AppError from '../errors/AppError';
 import handleCastError from '../errors/handleCastError';
 import handleDuplicateError from '../errors/handleDuplicateError';
 import handleValidationError from '../errors/handleValidationError';
 import handleZodError from '../errors/handleZodError';
 import { TErrorSources } from '../errors/interface/error';
+import config from '../config';
 
 // Define the error handler with proper typing
 const globalErrorHandler: ErrorRequestHandler = (
