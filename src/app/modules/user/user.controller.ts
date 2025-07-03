@@ -4,6 +4,7 @@ import sendResponse from "../../utils/sendResponse";
 import { Request, Response } from "express";
 import { UserServices } from "./user.service";
 import { UserModel } from "./user.model";
+import AppError from "../../errors/AppError";
 
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
@@ -93,6 +94,16 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const id = req.params.id;
   const { oldPassword, newPassword } = req.body;
+
+
+  const existingUser = await UserModel.findById(id)
+  if(!existingUser){
+    throw new AppError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  if(user.email !== existingUser.email && user.role !== "superAdmin"){
+      throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized to change this user's password!");
+  }
 
   const result = await UserServices.changePassword(user,id, {oldPassword, newPassword});
 

@@ -2,7 +2,6 @@
 
 import httpStatus from "http-status";
 import AppError from "../../errors/AppError";
-import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import { IUser } from "./user.interface";
 import { UserModel } from "./user.model";
@@ -49,13 +48,7 @@ const updateUserProfileIntoDB = async (id: string, payload: any) => {
     image: payload.image,
   }
 
-  const updatedUser = await UserModel.findByIdAndUpdate(
-    { id },
-    { $set: updateData },
-    {
-      new: true,
-    }
-  ).select("-password");
+  const updatedUser = await UserModel.findByIdAndUpdate(id, updateData).select("-password");
 
   return updatedUser;
 };
@@ -98,13 +91,12 @@ const changePassword = async (user:any, id: string, payload: any) => {
     const hashedPassword = await bcrypt.hash(payload.newPassword, Number(config.bcrypt_salt_rounds));
 
     const updatedUser = await UserModel.findByIdAndUpdate(
-      { id },
-      { $set: { userPassword: hashedPassword } },
+      id,
+      { password: hashedPassword },
       {
         new: true,
-        runValidators: true,
       }
-    ).select("+password");
+    ).select("-password");
 
     return updatedUser;
   }
