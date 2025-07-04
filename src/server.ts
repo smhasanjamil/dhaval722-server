@@ -1,7 +1,7 @@
 import { Server } from 'http';
 import mongoose from 'mongoose';
 import app from './app';
-import config from './app/config';
+import config from '../src/app/config/index';
 
 
 let server: Server | null = null;
