@@ -6,31 +6,31 @@ const router = express.Router();
 
 router.post(
   "/",
-  auth("superAdmin"),
+  auth("admin"),
   UserControllers.createUser
 );
 
 router.get("/", 
-  auth("superAdmin"), 
+  auth("admin"), 
   UserControllers.getAllUsers);
 
 router.get(
   "/:id",
-  auth("superAdmin","admin"),
+  auth("admin", "salesUser", "warehouseUser", "driver"),
   UserControllers.getSingleUser
 );
 
-router.delete("/:id", auth("superAdmin"), UserControllers.deleteUser);
+router.delete("/:id", auth("admin"), UserControllers.deleteUser);
 
 router.patch(
   "/:id",
-  auth("superAdmin","admin"),
+  auth("admin", "salesUser", "warehouseUser", "driver"),
   UserControllers.updateUser
 );
 
 router.patch(
   "/change-password/:id",
-  auth("superAdmin","admin"),
+  auth("admin", "salesUser", "warehouseUser", "driver"),
   UserControllers.changePassword
 );
 

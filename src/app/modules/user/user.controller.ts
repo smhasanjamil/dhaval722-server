@@ -53,7 +53,7 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
     throw new Error("User not found");
   }
 
-  if (user?.role !== "superAdmin") {
+  if (user?.role !== "admin") {
     if (user?.email !== existingUser?.email) {
       throw new Error("You can not update other users information!");
     } else {
@@ -101,7 +101,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
     throw new AppError(httpStatus.NOT_FOUND, "User not found!");
   }
 
-  if(user.email !== existingUser.email && user.role !== "superAdmin"){
+  if(user.email !== existingUser.email && user.role !== "admin"){
       throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized to change this user's password!");
   }
 

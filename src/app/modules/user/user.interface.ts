@@ -4,7 +4,7 @@ export interface IUser{
   password: string;
   firstName?: string;
   lastName?: string;
-  role: string;
+  role: "admin" | "salesUser" | "warehouseUser" | "driver";
   image?: string;
   createdAt?: Date;
   updatedAt?: Date;

@@ -16,7 +16,7 @@ const seedUsers = async () => {
       {
         email: "admin@paper.com",
         password: await bcrypt.hash('admin@paper', Number(config.bcrypt_salt_rounds)),
-        role: "superAdmin"
+        role: "admin"
       }
     ];
 

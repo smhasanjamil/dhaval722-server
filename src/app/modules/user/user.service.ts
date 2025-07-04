@@ -67,7 +67,7 @@ const changePassword = async (user:any, id: string, payload: any) => {
     throw new Error("Old password and new password are required");
   }
 
-  if (user?.role == "superAdmin") {
+  if (user?.role == "admin") {
     const hashedPassword = await bcrypt.hash(payload.newPassword, Number(config.bcrypt_salt_rounds));
 
     const updatedUser = await UserModel.findByIdAndUpdate(

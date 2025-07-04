@@ -1,1 +1,1 @@
-type TUserRole = "admin" | "superAdmin";
+type TUserRole = "admin" | "salesUser" | "warehouseUser" | "driver";
