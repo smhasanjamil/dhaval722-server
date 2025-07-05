@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import { OrderServices } from "./order.service";
 import { OrderModel } from "./order.model";
 import AppError from "../../errors/AppError";
+import { UserModel } from "../user/user.model";
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;

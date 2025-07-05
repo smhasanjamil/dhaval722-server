@@ -14,7 +14,7 @@ const orderSchema = new Schema<IOrder>(
       enum: ["verified", "completed", "cancelled"],
       default: "verified",
     },
-    isDeleted:{type: Boolean, default: true},
+    isDeleted:{type: Boolean, default: false},
     paymentAmountReceived: { type: Number, default: 0 },
     discountGiven: { type: Number, default: 0 },
     openBalance: { type: Number, default: 0 },
@@ -25,11 +25,11 @@ const orderSchema = new Schema<IOrder>(
       enum: ["paid", "notPaid", "partiallyPaid"],
       default: "notPaid",
     },
-    salesPerson: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    // salesPerson: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: "User",
+    //   required: true,
+    // },
     products: [
       {
         productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
