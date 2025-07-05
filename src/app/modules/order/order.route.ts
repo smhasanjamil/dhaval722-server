@@ -6,17 +6,17 @@ const router = express.Router();
 
 router.post(
   "/",
-  auth("admin","salesUser"),
+  auth("admin"),
   OrderControllers.createOrder
 );
 
 router.get("/", 
-  auth("admin","salesUser"), 
+  auth("admin"), 
  OrderControllers.getAllOrders);
 
 router.get(
   "/:id",
-  auth("admin","salesUser"),
+  auth("admin"),
   OrderControllers.getSingleOrder
 );
 
@@ -24,7 +24,7 @@ router.delete("/:id", auth("admin"), OrderControllers.deleteOrder);
 
 router.patch(
   "/:id",
-  auth("admin","salesUser"),
+  auth("admin"),
   OrderControllers.updateOrder
 );
 
