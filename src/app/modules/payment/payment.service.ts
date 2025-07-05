@@ -16,7 +16,7 @@ const createPaymentIntoDB = async (payLoad: IPayment) => {
   }
 
   // Verify storeId exists
-  const existingCustomer = await CustomerModel.findOne({ _id: storeId, isdeleted: false });
+  const existingCustomer = await CustomerModel.findOne({ _id: storeId, isDeleted: false });
   if (!existingCustomer) {
     throw new AppError(httpStatus.BAD_REQUEST, "Customer not found!");
   }
@@ -25,6 +25,10 @@ const createPaymentIntoDB = async (payLoad: IPayment) => {
   const existingOrder = await OrderModel.findOne({ _id: forOrderId, isDeleted: false });
   if (!existingOrder) {
     throw new AppError(httpStatus.BAD_REQUEST, "Order not found!");
+  }
+
+  if(payLoad.method == "check" && (!payLoad.checkNumber || payLoad.checkImage)){
+    throw new AppError(httpStatus.BAD_REQUEST, "Both check number and image should be provided in check payment!");
   }
 
   const paymentData = {
@@ -69,7 +73,7 @@ const updatePaymentIntoDB = async (id: string, payload: Partial<IPayment>) => {
 
   // If updating storeId or forOrderId, verify they exist
   if (payload.storeId) {
-    const existingCustomer = await CustomerModel.findOne({ _id: payload.storeId, isdeleted: false });
+    const existingCustomer = await CustomerModel.findOne({ _id: payload.storeId, isDeleted: false });
     if (!existingCustomer) {
       throw new AppError(httpStatus.BAD_REQUEST, "Customer not found!");
     }

@@ -6,7 +6,10 @@ const orderSchema = new Schema<IOrder>(
     date: { type: String, required: true },
     invoiceNumber: { type: String, required: true, unique: true },
     PONumber: { type: String, required: true },
-    storeName: { type: String, required: true },
+    storeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Customer",
+    },
     paymentDueDate: { type: String, required: true },
     orderAmount: { type: Number, required: true },
     orderStatus: {
@@ -25,11 +28,6 @@ const orderSchema = new Schema<IOrder>(
       enum: ["paid", "notPaid", "partiallyPaid"],
       default: "notPaid",
     },
-    // salesPerson: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "User",
-    //   required: true,
-    // },
     products: [
       {
         productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },

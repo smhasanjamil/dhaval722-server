@@ -5,7 +5,7 @@ export interface IOrder {
     date: string,
     invoiceNumber: string,
     PONumber: string,
-    storeName: string,
+    storeId: Types.ObjectId,
     paymentDueDate: string,
     
         orderAmount: number, //total amount

@@ -4,6 +4,9 @@ import AppError from "../../errors/AppError";
 import { IOrder } from "./order.interface";
 import { OrderModel } from "./order.model";
 import { ProductModel } from "../product/product.model";
+import { generateSalesOrderInvoicePdf } from "../../utils/pdfCreate";
+import { CustomerModel } from "../customer/customer.model";
+
 
 const createOrderIntoDB = async (payLoad: IOrder) => {
   const { invoiceNumber, products } = payLoad;
@@ -13,6 +16,18 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
   if (checkExistingOrder) {
     throw new AppError(httpStatus.BAD_REQUEST, "This invoice number is already in use!");
   }
+
+  console.log("cus:",payLoad.storeId)
+
+  const checkExistingStore = await CustomerModel.findById(payLoad?.storeId);
+  if (!checkExistingStore) {
+    throw new AppError(httpStatus.BAD_REQUEST, "This customer store does not exist!");
+  }
+
+  if (checkExistingStore.isdeleted ==  true) {
+    throw new AppError(httpStatus.BAD_REQUEST, "This customer store was deleted!");
+  }
+
 
   // Step 1: Verify all product IDs exist
   console.log("Step 1: Verifying product IDs...");
@@ -71,7 +86,7 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
     date: payLoad.date,
     invoiceNumber: payLoad.invoiceNumber,
     PONumber: payLoad.PONumber,
-    storeName: payLoad.storeName,
+    storeId: payLoad.storeId,
     paymentDueDate: payLoad.paymentDueDate,
     orderAmount,
     orderStatus: payLoad.orderStatus || "verified",
@@ -91,6 +106,23 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
   return createdOrder;
 };
 
+
+const generateOrderInvoicePdf = async (id: string): Promise<Buffer> => {
+  const order = await OrderModel.findOne({ _id: id, isDeleted: false })
+    .populate("products.productId")
+    .populate("storeId")
+    .lean();
+
+    console.log(order)
+  if (!order) {
+    throw new AppError(httpStatus.NOT_FOUND, "Order not found or deleted");
+  }
+
+  const pdfBuffer = await generateSalesOrderInvoicePdf(order);
+  return pdfBuffer;
+};
+
+
 const getAllOrdersFromDB = async () => {
   const result = await OrderModel.find({ isDeleted: false }).populate("products.productId");
   return result;
@@ -98,16 +130,25 @@ const getAllOrdersFromDB = async () => {
 
 const getSingleOrderFromDB = async (id: string) => {
   const result = await OrderModel.findOne({ _id: id, isDeleted: false })
-    .populate("products.productId");
+    .populate("products.productId")
+    .populate("storeId")
+    .lean();
+
   return result;
 };
 
 const updateOrderIntoDB = async (id: string, payload: Partial<IOrder>) => {
+
+    const checkExistingStore = await CustomerModel.findOne({ _id: payload.storeId, isDeleted: false });
+  if (!checkExistingStore) {
+    throw new AppError(httpStatus.BAD_REQUEST, "This customer store does not exist!");
+  }
+
   const updateData = {
     date: payload.date,
     invoiceNumber: payload.invoiceNumber,
     PONumber: payload.PONumber,
-    storeName: payload.storeName,
+    storeId: payload.storeId,
     paymentDueDate: payload.paymentDueDate,
     orderAmount: payload.orderAmount,
     orderStatus: payload.orderStatus,
@@ -157,4 +198,5 @@ export const OrderServices = {
   getSingleOrderFromDB,
   updateOrderIntoDB,
   deleteOrderIntoDB,
+  generateOrderInvoicePdf
 };

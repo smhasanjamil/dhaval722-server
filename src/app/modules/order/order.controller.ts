@@ -5,7 +5,6 @@ import { Request, Response } from "express";
 import { OrderServices } from "./order.service";
 import { OrderModel } from "./order.model";
 import AppError from "../../errors/AppError";
-import { UserModel } from "../user/user.model";
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
@@ -17,6 +16,18 @@ const createOrder = catchAsync(async (req: Request, res: Response) => {
     message: "Order created successfully",
     data: result,
   });
+});
+
+const getOrderInvoicePdf = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const pdfBuffer = await OrderServices.generateOrderInvoicePdf(id);
+
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": "inline; filename=arbora-invoice.pdf",
+  });
+
+  res.status(httpStatus.OK).send(pdfBuffer);
 });
 
 const getAllOrders = catchAsync(async (req: Request, res: Response) => {
@@ -84,4 +95,5 @@ export const OrderControllers = {
   getSingleOrder,
   updateOrder,
   deleteOrder,
+  getOrderInvoicePdf
 };

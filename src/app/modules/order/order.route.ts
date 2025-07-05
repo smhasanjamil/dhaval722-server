@@ -14,6 +14,10 @@ router.get("/",
   auth("admin"), 
  OrderControllers.getAllOrders);
 
+router.get("/orderInvoice/:id", 
+  // auth("admin"), 
+ OrderControllers.getOrderInvoicePdf);
+
 router.get(
   "/:id",
   auth("admin"),

@@ -10,13 +10,13 @@ router.get("/", CategoryController.getAllCategories);
 router.get("/:id", CategoryController.getCategoryById);
 
 router.post(
-  "/create",
+  "/",
   validateRequest(categoryValidation.createCategoryValidationSchema),
   CategoryController.createCategory
 );
 
 router.patch(
-  "/update/:id",
+  "/:id",
   validateRequest(categoryValidation.updateCategoryValidationSchema),
   CategoryController.updateCategory
 );

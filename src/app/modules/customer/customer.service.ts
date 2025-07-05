@@ -46,6 +46,7 @@ const createCustomerIntoDB = async (payLoad: ICustomer) => {
   return createdCustomer;
 };
 
+
 const getAllCustomersFromDB = async () => {
   const result = await CustomerModel.find({ isdeleted: false });
   return result;
