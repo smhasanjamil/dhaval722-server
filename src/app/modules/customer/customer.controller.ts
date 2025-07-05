@@ -10,6 +10,11 @@ const createCustomer = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
   const result = await CustomerServices.createCustomerIntoDB(body);
 
+  const existing = await CustomerModel.findOne({storeName: body.storeName})
+  if(existing){
+        throw new AppError(httpStatus.BAD_REQUEST, "Customer store already exists with this name!");
+  }
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

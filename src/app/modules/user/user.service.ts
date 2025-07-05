@@ -21,6 +21,7 @@ const createUserIntoDB = async (payLoad: IUser) => {
     lastName: payLoad.lastName,
     image: payLoad.image,
     email: payLoad.email,
+    role: payLoad.role,
     password: payLoad.password
   };
 
