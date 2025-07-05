@@ -9,7 +9,7 @@ import router from "./app/routes/route";
 const app: Application = express();
 
 // Middleware setup
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: "*" }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
