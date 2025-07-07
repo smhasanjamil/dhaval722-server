@@ -3,6 +3,7 @@ import AppError from "../../errors/AppError";
 import { IProduct } from "./product.interface";
 import { ProductModel } from "./product.model";
 import { CategoryModel } from "../category/category.model";
+import { generateProductItemNumber } from "../../utils/generateProductItemNumber";
 
 const createProductInDB = async (payload: IProduct): Promise<IProduct> => {
   //  Check if category exists
@@ -22,22 +23,28 @@ const createProductInDB = async (payload: IProduct): Promise<IProduct> => {
   if (existing) {
     throw new AppError(
       status.CONFLICT,
-      "Product with same barcode or item number already exists"
+      "Product with same barcode already exists"
     );
   }
+  const itemNumber = await generateProductItemNumber();
 
-  const product = await ProductModel.create(payload);
+  const productData = {...payload, itemNumber}
+
+  console.log("Data prod: ", productData)
+
+  const product = await ProductModel.create(productData);
   return product;
 };
 
 // Get All Products From DB
 const getAllProductsFromDB = async () => {
-  return await ProductModel.find().sort({ createdAt: -1 });
+  return await ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 });
 };
+
 
 // Get single product
 const getSingleProductFromDB = async (id: string) => {
-  const product = await ProductModel.findById(id);
+  const product = await ProductModel.findOne({ _id: id, isDeleted: false });
 
   if (!product) {
     throw new AppError(status.NOT_FOUND, "Product not found");
@@ -46,10 +53,11 @@ const getSingleProductFromDB = async (id: string) => {
   return product;
 };
 
+
 // Update product
 const updateProductInDB = async (id: string, payload: Partial<IProduct>) => {
-  // 1. Check if product exists
-  const existingProduct = await ProductModel.findById(id);
+  // 1. Check if product exists and not deleted
+  const existingProduct = await ProductModel.findOne({ _id: id, isDeleted: false });
   if (!existingProduct) {
     throw new AppError(status.NOT_FOUND, "Product not found");
   }
@@ -70,6 +78,7 @@ const updateProductInDB = async (id: string, payload: Partial<IProduct>) => {
         { itemNumber: payload.itemNumber },
       ],
       _id: { $ne: id },
+      isDeleted: false, // only check against non-deleted products
     });
 
     if (conflict) {
@@ -89,16 +98,22 @@ const updateProductInDB = async (id: string, payload: Partial<IProduct>) => {
   return updatedProduct;
 };
 
-// Delete Product From DB
-const deleteProductFromDB = async (id: string) => {
-  const deleted = await ProductModel.findByIdAndDelete(id);
 
-  if (!deleted) {
+// Delete Product From DB
+
+const deleteProductFromDB = async (id: string) => {
+  const product = await ProductModel.findById(id);
+
+  if (!product) {
     throw new AppError(status.NOT_FOUND, "Product not found");
   }
 
-  return deleted;
+  product.isDeleted = true;
+  const deletedProduct = await product.save();
+
+  return deletedProduct;
 };
+
 
 export const ProductService = {
   createProductInDB,

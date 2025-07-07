@@ -32,7 +32,6 @@ const createProductValidationSchema = z.object({
     purchasePrice: z.number().min(0, "Purchase price must be non-negative"),
 
     barcodeString: z.string().trim().min(1, "Barcode is required"),
-    itemNumber: z.string().trim().min(1, "Item number is required"),
 
     quantity: z.number().min(0, "Quantity must be non-negative"),
 

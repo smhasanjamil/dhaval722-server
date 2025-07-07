@@ -6,12 +6,12 @@ const router = express.Router();
 
 router.post(
   "/",
-  auth("admin"),
+  // auth("admin"),
   OrderControllers.createOrder
 );
 
 router.get("/", 
-  auth("admin"), 
+  // auth("admin"), 
  OrderControllers.getAllOrders);
 
 router.get("/orderInvoice/:id", 
@@ -20,7 +20,7 @@ router.get("/orderInvoice/:id",
 
 router.get(
   "/:id",
-  auth("admin"),
+  // auth("admin"),
   OrderControllers.getSingleOrder
 );
 
@@ -28,7 +28,7 @@ router.delete("/:id", auth("admin"), OrderControllers.deleteOrder);
 
 router.patch(
   "/:id",
-  auth("admin"),
+  // auth("admin"),
   OrderControllers.updateOrder
 );
 

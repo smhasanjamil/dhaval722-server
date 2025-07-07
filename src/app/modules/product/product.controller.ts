@@ -4,11 +4,13 @@ import { IProduct } from "./product.interface";
 import { ProductService } from "./product.service";
 import sendResponse from "../../utils/sendResponse";
 import status from "http-status";
+import { generateProductItemNumber } from "../../utils/generateProductItemNumber";
 
 // Create Product
 const createProduct = catchAsync(async (req: Request, res: Response) => {
   const payload: IProduct = req.body;
   const result = await ProductService.createProductInDB(payload);
+generateProductItemNumber();
 
   sendResponse(res, {
     statusCode: status.CREATED,

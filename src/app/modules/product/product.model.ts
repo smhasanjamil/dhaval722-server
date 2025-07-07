@@ -19,7 +19,13 @@ const ProductSchema = new Schema<IProduct>(
       required: true,
       min: 1,
     },
-
+    isDeleted:{
+      type: Boolean,
+      default: false
+    },
+    competitorPrice:{
+      type: Number,
+    },
     packingUnit: {
       type: String,
       enum: Object.values(PackingUnit),

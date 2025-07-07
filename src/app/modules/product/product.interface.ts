@@ -27,6 +27,7 @@ export enum DimensionUnit {
 export interface IProduct {
   name: string;
   packetQuantity: number;
+  isDeleted: boolean;
   packingUnit: PackingUnit;
   weight: number;
   weightUnit: WeightUnit;
@@ -46,4 +47,5 @@ export interface IProduct {
   };
   createdAt?: Date;
   updatedAt?: Date;
+  competitorPrice?: number;
 }
