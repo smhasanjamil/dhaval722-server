@@ -21,4 +21,6 @@ router.patch(
   CategoryController.updateCategory
 );
 
+router.delete("/:id", CategoryController.deleteCategory);
+
 export const CategoryRoutes = router;

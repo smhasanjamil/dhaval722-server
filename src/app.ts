@@ -9,7 +9,13 @@ import router from "./app/routes/route";
 const app: Application = express();
 
 // Middleware setup
-app.use(cors({ origin: "*" }));
+// Allow all origins, methods, and credentials if needed
+app.use(cors({
+  origin: "*", // or specify origins array in production
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true, // if you plan to use cookies with CORS
+}));
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
