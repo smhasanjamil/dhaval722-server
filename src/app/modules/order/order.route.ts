@@ -1,0 +1,36 @@
+import express from "express";
+import auth from "../../middlewares/auth";
+import { OrderControllers } from "./order.controller";
+
+const router = express.Router();
+
+router.post(
+  "/",
+  // auth("admin"),
+  OrderControllers.createOrder
+);
+
+router.get("/", 
+  // auth("admin"), 
+ OrderControllers.getAllOrders);
+
+router.get("/orderInvoice/:id", 
+  // auth("admin"), 
+ OrderControllers.getOrderInvoicePdf);
+
+router.get(
+  "/:id",
+  // auth("admin"),
+  OrderControllers.getSingleOrder
+);
+
+router.delete("/:id", auth("admin"), OrderControllers.deleteOrder);
+
+router.patch(
+  "/:id",
+  // auth("admin"),
+  OrderControllers.updateOrder
+);
+
+
+export const OrderRoutes = router;
