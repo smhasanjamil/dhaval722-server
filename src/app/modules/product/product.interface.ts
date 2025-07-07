@@ -26,9 +26,10 @@ export enum DimensionUnit {
 
 export interface IProduct {
   name: string;
-  packetQuantity: number;
+  // packetQuantity: number;
   isDeleted: boolean;
-  packingUnit: PackingUnit;
+  packetSize : string;
+  // packingUnit: PackingUnit;
   weight: number;
   weightUnit: WeightUnit;
   categoryId: Types.ObjectId;

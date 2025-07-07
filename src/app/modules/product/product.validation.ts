@@ -15,10 +15,7 @@ const packageDimensionsSchema = z
 const createProductValidationSchema = z.object({
   body: z.object({
     name: z.string().trim().min(1, "Product name is required"),
-
-    packetQuantity: z.number().min(1, "Packet quantity must be at least 1"),
-    packingUnit: z.nativeEnum(PackingUnit),
-
+    packetSize: z.string(),
     weight: z.number().min(0, "Weight must be non-negative"),
     weightUnit: z.nativeEnum(WeightUnit),
 

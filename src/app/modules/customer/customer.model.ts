@@ -27,7 +27,8 @@ const customerSchema = new Schema<ICustomer>(
     ownerLegalFrontImage: { type: String, required: true },
     ownerLegalBackImage: { type: String, required: true },
     voidedCheckImage: { type: String, required: true },
-    isdeleted: { type: Boolean, default: false },
+    miscellaneousDocImage: { type: String},
+    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

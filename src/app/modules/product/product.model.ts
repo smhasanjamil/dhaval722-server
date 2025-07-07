@@ -14,11 +14,6 @@ const ProductSchema = new Schema<IProduct>(
       trim: true,
     },
 
-    packetQuantity: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
     isDeleted:{
       type: Boolean,
       default: false
@@ -26,12 +21,10 @@ const ProductSchema = new Schema<IProduct>(
     competitorPrice:{
       type: Number,
     },
-    packingUnit: {
+    packetSize: {
       type: String,
-      enum: Object.values(PackingUnit),
       required: true,
     },
-
     weight: {
       type: Number,
       required: true,
