@@ -2,9 +2,9 @@ import { Schema, model } from "mongoose";
 import {
   DimensionUnit,
   IProduct,
-  PackingUnit,
   WeightUnit,
 } from "./product.interface";
+import { number } from "zod";
 
 const ProductSchema = new Schema<IProduct>(
   {
@@ -40,6 +40,11 @@ const ProductSchema = new Schema<IProduct>(
     categoryId: {
       type: Schema.Types.ObjectId,
       ref: "Category",
+      required: true,
+    },
+
+    backDoorQuantity: {
+      type: Number,
       required: true,
     },
 

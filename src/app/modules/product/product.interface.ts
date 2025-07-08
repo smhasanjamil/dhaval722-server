@@ -46,6 +46,7 @@ export interface IProduct {
     height: number;
     unit: DimensionUnit;
   };
+  backDoorQuantity: number;
   createdAt?: Date;
   updatedAt?: Date;
   competitorPrice?: number;

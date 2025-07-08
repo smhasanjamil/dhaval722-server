@@ -5,5 +5,4 @@ export const generateProductItemNumber = async() => {
       const product = await ProductModel.find();
       return  `PRO-${product.length+1}`
 
-    
 }
