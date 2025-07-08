@@ -18,11 +18,18 @@ router.get("/orderInvoice/:id",
   // auth("admin"), 
  OrderControllers.getOrderInvoicePdf);
 
+// Get Products Grouped By Category
+router.get("/bulk-order-excel", OrderControllers.getProductsGroupedByCategory);
+
+
+
 router.get(
   "/:id",
   // auth("admin"),
   OrderControllers.getSingleOrder
 );
+
+
 
 router.delete("/:id", auth("admin"), OrderControllers.deleteOrder);
 

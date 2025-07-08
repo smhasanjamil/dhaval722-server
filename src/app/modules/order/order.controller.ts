@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import { OrderServices } from "./order.service";
 import { OrderModel } from "./order.model";
 import AppError from "../../errors/AppError";
+import { exportGroupedProductsToExcel } from "../../utils/exportToExcel";
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
@@ -89,11 +90,33 @@ const deleteOrder = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get Products Grouped By Category
+const getProductsGroupedByCategory = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await OrderServices.getProductsGroupedByCategory();
+
+       // ✅ Check if client wants Excel export
+    const shouldDownload = req.query.download === "true";
+
+    if (shouldDownload) {
+      return exportGroupedProductsToExcel(result, res);
+    }
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Products grouped by category",
+      data: result,
+    });
+  }
+);
+
 export const OrderControllers = {
   createOrder,
   getAllOrders,
   getSingleOrder,
   updateOrder,
   deleteOrder,
-  getOrderInvoicePdf
+  getOrderInvoicePdf,
+  getProductsGroupedByCategory,
 };

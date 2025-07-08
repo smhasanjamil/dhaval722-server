@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.1",
     "puppeteer": "^24.11.2",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.71"
   },
   "devDependencies": {
