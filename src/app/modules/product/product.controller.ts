@@ -32,6 +32,17 @@ const getAllProducts = catchAsync(async (_req: Request, res: Response) => {
   });
 });
 
+const getAllPacketSizes = catchAsync(async (_req: Request, res: Response) => {
+  const result = await ProductService.getAllPacketSizesFromDB();
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Packet sizes fetched successfully",
+    data: result,
+  });
+});
+
 // Get single product
 const getSingleProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -79,4 +90,5 @@ export const ProductController = {
   getSingleProduct,
   updateProduct,
   deleteProduct,
+  getAllPacketSizes
 };

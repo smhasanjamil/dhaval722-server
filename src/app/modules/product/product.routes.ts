@@ -6,11 +6,13 @@ import { productValidation } from "./product.validation";
 const router = Router();
 
 router.get("/", ProductController.getAllProducts);
+router.get("/packet-sizes", ProductController.getAllPacketSizes);
 router.get("/:id", ProductController.getSingleProduct);
+
 
 router.post(
   "/",
-  validateRequest(productValidation.createProductValidationSchema),
+  // validateRequest(productValidation.createProductValidationSchema),
   ProductController.createProduct
 );
 

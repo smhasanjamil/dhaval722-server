@@ -20,5 +20,6 @@ export interface ICustomer {
     ownerLegalFrontImage: string,
     ownerLegalBackImage: string,
     voidedCheckImage: string,
-    isdeleted: boolean
+    isDeleted: boolean,
+    miscellaneousDocImage?: string
 }

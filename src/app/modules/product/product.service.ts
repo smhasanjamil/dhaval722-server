@@ -5,41 +5,54 @@ import { ProductModel } from "./product.model";
 import { CategoryModel } from "../category/category.model";
 import { generateProductItemNumber } from "../../utils/generateProductItemNumber";
 
-const createProductInDB = async (payload: IProduct): Promise<IProduct> => {
-  //  Check if category exists
-  const category = await CategoryModel.findById(payload.categoryId);
-  if (!category) {
-    throw new AppError(status.NOT_FOUND, "Category not found");
+const createProductInDB = async ( payload: IProduct | IProduct[]) => {
+  // Ensure we're always working with an array internally
+  const productsArray = Array.isArray(payload) ? payload : [payload];
+
+  const createdProducts: IProduct[] = [];
+
+  for (const productPayload of productsArray) {
+    // 1️⃣ Validate category
+    const category = await CategoryModel.findById(productPayload.categoryId);
+    if (!category) {
+      throw new AppError(status.NOT_FOUND, `Category not found for product: ${productPayload.name || "Unnamed Product"}`);
+    }
+
+    // 2️⃣ Check duplicate barcode or item number
+    const existing = await ProductModel.findOne({
+      $or: [
+        { barcodeString: productPayload.barcodeString },
+        { itemNumber: productPayload.itemNumber },
+      ],
+    });
+    if (existing) {
+      throw new AppError(
+        status.CONFLICT,
+        `Product with barcode ${productPayload.barcodeString} or item number already exists`
+      );
+    }
+
+    const itemNumber = await generateProductItemNumber();
+
+    const productData = { ...productPayload, itemNumber };
+    const createdProduct = await ProductModel.create(productData);
+
+    createdProducts.push(createdProduct);
   }
 
-  // Check for duplicate barcode or item number
-  const existing = await ProductModel.findOne({
-    $or: [
-      { barcodeString: payload.barcodeString },
-      { itemNumber: payload.itemNumber },
-    ],
-  });
-
-  if (existing) {
-    throw new AppError(
-      status.CONFLICT,
-      "Product with same barcode already exists"
-    );
-  }
-  const itemNumber = await generateProductItemNumber();
-
-  const productData = {...payload, itemNumber}
-
-  console.log("Data prod: ", productData)
-
-  const product = await ProductModel.create(productData);
-  return product;
+  return Array.isArray(payload) ? createdProducts : createdProducts[0];
 };
 
 // Get All Products From DB
 const getAllProductsFromDB = async () => {
   return await ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 });
 };
+
+const getAllPacketSizesFromDB = async () => {
+  const packetSizes = await ProductModel.distinct("packetSize", { isDeleted: false });
+  return packetSizes;
+};
+
 
 
 // Get single product
@@ -121,4 +134,5 @@ export const ProductService = {
   getSingleProductFromDB,
   updateProductInDB,
   deleteProductFromDB,
+  getAllPacketSizesFromDB
 };
