@@ -45,7 +45,7 @@ const createProductInDB = async ( payload: IProduct | IProduct[]) => {
 
 // Get All Products From DB
 const getAllProductsFromDB = async () => {
-  return await ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 });
+  return await ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 }).populate("categoryId");
 };
 
 const getAllPacketSizesFromDB = async () => {
@@ -57,7 +57,7 @@ const getAllPacketSizesFromDB = async () => {
 
 // Get single product
 const getSingleProductFromDB = async (id: string) => {
-  const product = await ProductModel.findOne({ _id: id, isDeleted: false });
+  const product = await ProductModel.findOne({ _id: id, isDeleted: false }).populate("categoryId");
 
   if (!product) {
     throw new AppError(status.NOT_FOUND, "Product not found");
