@@ -19,7 +19,7 @@ router.get("/orderInvoice/:id",
  OrderControllers.getOrderInvoicePdf);
 
 // Get Products Grouped By Category
-router.get("/bulk-order-excel", OrderControllers.getProductsGroupedByCategory);
+router.get("/bulk-order-excel-empty", OrderControllers.getProductsGroupedByCategory);
 
 
 

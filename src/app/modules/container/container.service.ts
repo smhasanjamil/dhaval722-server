@@ -86,7 +86,6 @@ const xlImportToAddContainerIntoDB = async (fileBuffer: Buffer) => {
 
     const jsonData = await xlToJson(fileBuffer);
 
-
     return jsonData;
 };
 
