@@ -17,7 +17,7 @@ const orderSchema = new Schema<IOrder>(
       enum: ["verified", "completed", "cancelled"],
       default: "verified",
     },
-    isDeleted:{type: Boolean, default: false},
+    isDeleted: { type: Boolean, default: false },
     paymentAmountReceived: { type: Number, default: 0 },
     discountGiven: { type: Number, default: 0 },
     openBalance: { type: Number, default: 0 },
@@ -30,7 +30,11 @@ const orderSchema = new Schema<IOrder>(
     },
     products: [
       {
-        productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+        productId: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
         quantity: { type: Number, required: true },
         discount: { type: Number, default: 0 },
       },
@@ -43,14 +47,17 @@ const orderSchema = new Schema<IOrder>(
 
 // Calculate
 orderSchema.pre("save", function (next) {
-
   // Calculate total discount from products array
-  this.discountGiven = this.products.reduce((total: number, product: { discount: number }) => {
-    return total + (product.discount || 0);
-  }, 0);
+  this.discountGiven = this.products.reduce(
+    (total: number, product: { discount: number }) => {
+      return total + (product.discount || 0);
+    },
+    0
+  );
 
   // Calculate openBalance
-  this.openBalance = this.orderAmount - this.paymentAmountReceived - this.discountGiven;
+  this.openBalance =
+    this.orderAmount - this.paymentAmountReceived - this.discountGiven;
 
   next();
 });
