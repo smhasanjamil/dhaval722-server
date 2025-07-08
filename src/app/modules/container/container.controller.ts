@@ -80,6 +80,10 @@ const deleteContainer = catchAsync(async (req: Request, res: Response) => {
 
 const xlImportToAddContainer = catchAsync(async (req: Request, res: Response) => {
 
+  if (!req.file) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'No file uploaded');
+  }
+
     const result = await ContainerServices.xlImportToAddContainerIntoDB(req.file!.buffer);
 
     sendResponse(res, {
