@@ -1,6 +1,7 @@
 import express from "express";
 import auth from "../../middlewares/auth";
 import { ContainerControllers } from "./container.controller";
+import upload from "../../utils/multer";
 
 const router = express.Router();
 
@@ -10,13 +11,20 @@ router.post(
   ContainerControllers.createContainer
 );
 
+router.post(
+  "/xl",
+  upload.single('file'), // This is REQUIRED
+  // auth("admin"),
+  ContainerControllers.xlImportToAddContainer
+);
+
 router.get("/", 
   auth("admin"), 
   ContainerControllers.getAllContainers);
 
 router.get(
   "/:id",
-  auth("admin"),
+  // auth("admin"),
   ContainerControllers.getSingleContainer
 );
 

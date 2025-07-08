@@ -24,7 +24,7 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
     throw new AppError(httpStatus.BAD_REQUEST, "This customer store does not exist!");
   }
 
-  if (checkExistingStore.isdeleted ==  true) {
+  if (checkExistingStore.isDeleted ==  true) {
     throw new AppError(httpStatus.BAD_REQUEST, "This customer store was deleted!");
   }
 

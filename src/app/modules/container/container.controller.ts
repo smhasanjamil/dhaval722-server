@@ -77,10 +77,24 @@ const deleteContainer = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const xlImportToAddContainer = catchAsync(async (req: Request, res: Response) => {
+
+    const result = await ContainerServices.xlImportToAddContainerIntoDB(req.file!.buffer);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: 'XLSX decoded and containers inserted successfully',
+        data: result,
+    });
+});
+
 export const ContainerControllers = {
   createContainer,
   getAllContainers,
   getSingleContainer,
   updateContainer,
   deleteContainer,
+  xlImportToAddContainer
 };
