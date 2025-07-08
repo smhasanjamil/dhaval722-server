@@ -5,16 +5,14 @@ import { ICustomer } from "./customer.interface";
 import { CustomerModel } from "./customer.model";
 
 const createCustomerIntoDB = async (payLoad: ICustomer) => {
-  const { storePhone, storePersonEmail } = payLoad;
+  const { storePhone, storeName } = payLoad;
 
-  const checkExistingCustomer = await CustomerModel.findOne({
-    $or: [{ storePhone, isdeleted: false }, { storePersonEmail, isdeleted: false }],
-  });
+  const checkExistingCustomer = await CustomerModel.findOne({ storeName, isDeleted: false });
 
   if (checkExistingCustomer) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      "This store phone number or email is already in use!"
+      "This store name is already in use!"
     );
   }
 
@@ -48,12 +46,12 @@ const createCustomerIntoDB = async (payLoad: ICustomer) => {
 
 
 const getAllCustomersFromDB = async () => {
-  const result = await CustomerModel.find({ isdeleted: false });
+  const result = await CustomerModel.find({ isDeleted: false });
   return result;
 };
 
 const getSingleCustomerFromDB = async (id: string) => {
-  const result = await CustomerModel.findOne({ _id: id, isdeleted: false });
+  const result = await CustomerModel.findOne({ _id: id, isDeleted: false });
   return result;
 };
 
@@ -85,7 +83,7 @@ const updateCustomerIntoDB = async (id: string, payload: Partial<ICustomer>) => 
     id,
     { $set: updateData },
     { new: true, runValidators: true }
-  ).where({ isdeleted: false });
+  ).where({ isDeleted: false });
 
   if (!updatedCustomer) {
     throw new AppError(httpStatus.NOT_FOUND, "Customer not found or already deleted");
@@ -97,7 +95,7 @@ const updateCustomerIntoDB = async (id: string, payload: Partial<ICustomer>) => 
 const deleteCustomerIntoDB = async (id: string) => {
   const result = await CustomerModel.findByIdAndUpdate(
     id,
-    { $set: { isdeleted: true } },
+    { $set: { isDeleted: true } },
     { new: true }
   );
 

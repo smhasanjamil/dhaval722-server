@@ -35,4 +35,35 @@ const customerSchema = new Schema<ICustomer>(
   }
 );
 
+export const customerUpdateSchema = new Schema<Partial<ICustomer>>(
+  {
+    storeName: { type: String },
+    storePhone: { type: String },
+    storePersonEmail: { type: String },
+    salesTaxId: { type: String },
+    acceptedDeliveryDays: {
+      type: [String],
+      enum: ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"],
+    },
+    bankACHAccountInfo: { type: String },
+    storePersonName: { type: String },
+    storePersonPhone: { type: String },
+    billingAddress: { type: String },
+    billingState: { type: String },
+    billingZipcode: { type: String },
+    billingCity: { type: String },
+    shippingAddress: { type: String },
+    shippingState: { type: String },
+    shippingZipcode: { type: String },
+    shippingCity: { type: String },
+    creditApplication: { type: String },
+    ownerLegalFrontImage: { type: String },
+    ownerLegalBackImage: { type: String },
+    voidedCheckImage: { type: String },
+    miscellaneousDocImage: { type: String },
+    isDeleted: { type: Boolean },
+  },
+  { timestamps: false, _id: false }
+);
+
 export const CustomerModel = model<ICustomer>("Customer", customerSchema);

@@ -4,6 +4,7 @@ import AppError from "../../errors/AppError";
 import { IContainer } from "./container.interface";
 import { ContainerModel } from "./container.model";
 import { ProductModel } from "../product/product.model";
+import { xlToJson } from "../../utils/xlToJson";
 
 const createContainerIntoDB = async (payLoad: IContainer) => {
   const { containerNumber, containerProducts } = payLoad;
@@ -80,10 +81,22 @@ const deleteContainerIntoDB = async (id: string) => {
   return result;
 };
 
+
+const xlImportToAddContainerIntoDB = async (fileBuffer: Buffer) => {
+
+    const jsonData = await xlToJson(fileBuffer);
+
+
+    return jsonData;
+};
+
+
+
 export const ContainerServices = {
   createContainerIntoDB,
   getAllContainersFromDB,
   getSingleContainerFromDB,
   updateContainerIntoDB,
   deleteContainerIntoDB,
+  xlImportToAddContainerIntoDB
 };

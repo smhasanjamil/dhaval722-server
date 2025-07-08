@@ -32,11 +32,8 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
     );
   }
 
-  if (checkExistingStore.isdeleted == true) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "This customer store was deleted!"
-    );
+  if (checkExistingStore.isDeleted ==  true) {
+    throw new AppError(httpStatus.BAD_REQUEST, "This customer store was deleted!");
   }
 
   // Step 1: Verify all product IDs exist
