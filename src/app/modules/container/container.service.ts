@@ -55,7 +55,7 @@ const updateContainerIntoDB = async (id: string, payload: Partial<IContainer>) =
   const updatedContainer = await ContainerModel.findByIdAndUpdate(
     id,
     { $set: updateData },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true } 
   )
     .where({ isDeleted: false })
     .populate("containerProducts.productId");
