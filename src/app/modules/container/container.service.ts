@@ -5,38 +5,66 @@ import { IContainer } from "./container.interface";
 import { ContainerModel } from "./container.model";
 import { ProductModel } from "../product/product.model";
 import { xlToJson } from "../../utils/xlToJson";
+import { ProductService } from "../product/product.service";
 
-const createContainerIntoDB = async (payLoad: IContainer) => {
-  const { containerNumber, containerProducts } = payLoad;
 
-  // 1️⃣ Check if container number is already in use
+export const createContainerIntoDB = async (payLoad: IContainer) => {
+  const { containerNumber, containerProducts, containerStatus } = payLoad;
+
+  // Check if container number is already in use
   const checkExistingContainer = await ContainerModel.findOne({
     containerNumber,
     isDeleted: false,
   });
-
   if (checkExistingContainer) {
     throw new AppError(httpStatus.BAD_REQUEST, "This container number is already in use!");
   }
 
-  // 2️⃣ Validate each product by itemNumber
-  const itemNumbers = containerProducts.map((p) => p.itemNumber);
+  // Validate each product by itemNumber and prepare for insertion
+  const failedEntries: any[] = [];
+  const enrichedContainerProducts: any[] = [];
 
-  const existingProducts = await ProductModel.find({
-    itemNumber: { $in: itemNumbers },
-  });
+  for (const p of containerProducts) {
+    const existingProduct = await ProductModel.findOne({
+      itemNumber: p.itemNumber,
+    });
 
-  if (existingProducts.length !== itemNumbers.length) {
-    throw new AppError(httpStatus.BAD_REQUEST, "One or more products not found!");
+    if (!existingProduct) {
+      failedEntries.push({
+        itemNumber: p.itemNumber,
+        reason: "Product not found",
+      });
+      continue;
+    }
+
+    //update inventory 
+    (containerStatus == "onTheWay") ?
+    await ProductService.updateProductInDB(String(existingProduct._id), {incomingQuantity: existingProduct.incomingQuantity + p.quantity}) 
+    :
+    await ProductService.updateProductInDB(String(existingProduct._id), {quantity: existingProduct.quantity + p.quantity}) 
+
+
+
+
+    const perCaseCost = p.purchasePrice / p.quantity;
+
+    enrichedContainerProducts.push({
+      category: p.category,
+      itemNumber: p.itemNumber,
+      packetSize: p.packetSize,
+      quantity: p.quantity,
+      perCaseCost: perCaseCost,
+      purchasePrice: p.purchasePrice,
+      salesPrice: p.salesPrice,
+    });
   }
 
-  // 3️⃣ Calculate perCaseCost for each product
-  const enrichedContainerProducts = containerProducts.map((p) => ({
-    ...p,
-    perCaseCost: p.purchasePrice / p.productQuantity,
-  }));
+  // If no valid products found, abort creation
+  if (enrichedContainerProducts.length === 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "No valid products found to add in the container.");
+  }
 
-  // 4️⃣ Create the container
+  // 3️⃣ Create the container with valid products
   const containerData = {
     containerNumber: payLoad.containerNumber,
     containerName: payLoad.containerName,
@@ -48,8 +76,15 @@ const createContainerIntoDB = async (payLoad: IContainer) => {
 
   const createdContainer = await ContainerModel.create(containerData);
 
-  return createdContainer;
+  // 4️⃣ Return structured response
+  const containerEntry = {
+    createdContainer,
+    failedEntries,
+  };
+
+  return containerEntry;
 };
+
 
 
 const getAllContainersFromDB = async () => {
@@ -100,12 +135,35 @@ const deleteContainerIntoDB = async (id: string) => {
 };
 
 
-const xlImportToAddContainerIntoDB = async (fileBuffer: Buffer) => {
+const xlImportToAddContainerIntoDB = async (
+  fileBuffer: Buffer,
+  containerDetails: {
+    containerNumber: string;
+    containerName: string;
+    containerStatus?: "arrived" | "onTheWay";
+    deliveryDate: string;
+  }
+) => {
+  // 1️⃣ Parse items from XLSX
+  const jsonData = await xlToJson(fileBuffer);
 
-    const jsonData = await xlToJson(fileBuffer);
+  // 2️⃣ Construct container payload using parsed items
+  const containerPayload = {
+    containerNumber: containerDetails.containerNumber,
+    containerName: containerDetails.containerName,
+    containerStatus: containerDetails.containerStatus || "onTheWay",
+    deliveryDate: containerDetails.deliveryDate,
+    containerProducts: jsonData, // ✅ use the items here
+    isDeleted: false,
+  };
 
-    return jsonData;
+  // 3️⃣ Create the container in DB
+  const createdContainerEntry = await createContainerIntoDB(containerPayload);
+
+  // 4️⃣ Return created container entry for API response
+  return createdContainerEntry;
 };
+
 
 
 
