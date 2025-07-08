@@ -9,30 +9,48 @@ import { xlToJson } from "../../utils/xlToJson";
 const createContainerIntoDB = async (payLoad: IContainer) => {
   const { containerNumber, containerProducts } = payLoad;
 
-  // Check if container number is already in use
-  const checkExistingContainer = await ContainerModel.findOne({ containerNumber, isDeleted: false });
+  // 1️⃣ Check if container number is already in use
+  const checkExistingContainer = await ContainerModel.findOne({
+    containerNumber,
+    isDeleted: false,
+  });
+
   if (checkExistingContainer) {
     throw new AppError(httpStatus.BAD_REQUEST, "This container number is already in use!");
   }
 
-  // Verify all product IDs exist
-  const productIds = containerProducts.map((p) => p.productId);
-  const existingProducts = await ProductModel.find({ _id: { $in: productIds } });
-  if (existingProducts.length !== productIds.length) {
+  // 2️⃣ Validate each product by itemNumber
+  const itemNumbers = containerProducts.map((p) => p.itemNumber);
+
+  const existingProducts = await ProductModel.find({
+    itemNumber: { $in: itemNumbers },
+  });
+
+  if (existingProducts.length !== itemNumbers.length) {
     throw new AppError(httpStatus.BAD_REQUEST, "One or more products not found!");
   }
 
+  // 3️⃣ Calculate perCaseCost for each product
+  const enrichedContainerProducts = containerProducts.map((p) => ({
+    ...p,
+    perCaseCost: p.purchasePrice / p.productQuantity,
+  }));
+
+  // 4️⃣ Create the container
   const containerData = {
     containerNumber: payLoad.containerNumber,
+    containerName: payLoad.containerName,
     containerStatus: payLoad.containerStatus || "onTheWay",
     deliveryDate: payLoad.deliveryDate,
-    containerProducts: payLoad.containerProducts,
+    containerProducts: enrichedContainerProducts,
+    isDeleted: false,
   };
 
   const createdContainer = await ContainerModel.create(containerData);
 
   return createdContainer;
 };
+
 
 const getAllContainersFromDB = async () => {
   const result = await ContainerModel.find({ isDeleted: false }).populate("containerProducts.productId");

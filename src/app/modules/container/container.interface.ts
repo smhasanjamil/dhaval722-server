@@ -7,9 +7,12 @@ export interface IContainer {
     containerStatus: "arrived" | "onTheWay" 
     deliveryDate: string,
     containerProducts: {
-        productId: Types.ObjectId,
+        itemNumber: string,
         packetSize: number;
         productQuantity: number,
+        purchasePrice: number,
+        salesPrice: number,
+        perCaseCost: number
     }[],
     isDeleted: boolean
 }
