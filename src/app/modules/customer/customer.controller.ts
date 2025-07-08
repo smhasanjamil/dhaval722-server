@@ -56,7 +56,7 @@ const updateCustomer = catchAsync(async (req: Request, res: Response) => {
 
   const existingCustomer = await CustomerModel.findById(id);
 
-  if (!existingCustomer || existingCustomer.isdeleted) {
+  if (!existingCustomer || existingCustomer.isDeleted) {
     throw new AppError(httpStatus.NOT_FOUND, "Customer not found");
   }
 
