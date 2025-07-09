@@ -68,8 +68,11 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
   const containerData = {
     containerNumber: payLoad.containerNumber,
     containerName: payLoad.containerName,
+    containerName: payLoad.containerName,
     containerStatus: payLoad.containerStatus || "onTheWay",
     deliveryDate: payLoad.deliveryDate,
+    containerProducts: enrichedContainerProducts,
+    isDeleted: false,
     containerProducts: enrichedContainerProducts,
     isDeleted: false,
   };
@@ -84,6 +87,7 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
 
   return containerEntry;
 };
+
 
 const getAllContainersFromDB = async () => {
   const result = await ContainerModel.find({ isDeleted: false }).populate("containerProducts.productId");
