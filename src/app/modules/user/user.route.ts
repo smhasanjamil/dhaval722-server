@@ -1,5 +1,5 @@
 import express from "express";
-import { UserControllers } from "./user.controller";
+import { handleResetPassword, sendResetOTP, UserControllers } from "./user.controller";
 import auth from "../../middlewares/auth";
 
 const router = express.Router();
@@ -33,5 +33,8 @@ router.patch(
   auth("admin", "salesUser", "warehouseUser", "driver"),
   UserControllers.changePassword
 );
+
+router.post("/forgot-password", sendResetOTP);
+router.post("/reset-password", handleResetPassword);
 
 export const UserRoutes = router;

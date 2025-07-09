@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { Request, Response } from "express";
-import { UserServices } from "./user.service";
+import { requestPasswordReset, resetPasswordWithOTP, UserServices } from "./user.service";
 import { UserModel } from "./user.model";
 import AppError from "../../errors/AppError";
 
@@ -91,30 +91,51 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Change password controller
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const id = req.params.id;
-  const { oldPassword, newPassword } = req.body;
+  const { newPassword } = req.body;
 
-
-  const existingUser = await UserModel.findById(id)
-  if(!existingUser){
-    throw new AppError(httpStatus.NOT_FOUND, "User not found!");
-  }
-
-  if(user.email !== existingUser.email && user.role !== "admin"){
-      throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized to change this user's password!");
-  }
-
-  const result = await UserServices.changePassword(user,id, {oldPassword, newPassword});
+  const updatedUser = await UserServices.changePassword(user, id, { newPassword });
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "Password changed successfully",
-    data: result,
+    data: updatedUser,
   });
 });
+
+
+
+// Password Reset
+export const sendResetOTP = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  await requestPasswordReset(email);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "OTP has been sent to your email",
+    data: { email },
+  });
+});
+
+export const handleResetPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+
+  const updatedUser = await resetPasswordWithOTP(email, otp, newPassword);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Password reset successfully",
+    data: updatedUser,
+  });
+});
+
 
 export const UserControllers = {
   createUser,
