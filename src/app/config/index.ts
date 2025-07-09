@@ -15,4 +15,7 @@ export default {
   jwt_otp_secret: process.env.JWT_OTP_SECRET,
   jwt_pass_reset_secret: process.env.JWT_PASS_RESET_SECRET,
   jwt_pass_reset_expires_in: process.env.JWT_PASS_RESET_EXPIRES_IN,
+  gmail_user: process.env.GMAIL_USER,
+  gmail_app_password: process.env.GMAIL_APP_PASSWORD,
+  app_name: process.env.APP_NAME,
 };
