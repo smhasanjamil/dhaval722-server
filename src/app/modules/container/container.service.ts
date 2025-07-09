@@ -85,8 +85,6 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
   return containerEntry;
 };
 
-
-
 const getAllContainersFromDB = async () => {
   const result = await ContainerModel.find({ isDeleted: false }).populate("containerProducts.productId");
   return result;
@@ -145,7 +143,7 @@ const xlImportToAddContainerIntoDB = async (
   }
 ) => {
   // 1️⃣ Parse items from XLSX
-  const jsonData = await xlToJson(fileBuffer);
+  const jsonData = xlToJson(fileBuffer);
 
   // 2️⃣ Construct container payload using parsed items
   const containerPayload = {

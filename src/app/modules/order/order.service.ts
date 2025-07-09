@@ -262,6 +262,12 @@ const getProductsGroupedByCategory = async () => {
   return grouped;
 };
 
+const getProductSegmentation = async()=>{
+
+  const orders = await OrderModel.find();
+  
+}
+
 export const OrderServices = {
   createOrderIntoDB,
   getAllOrdersFromDB,
@@ -270,4 +276,5 @@ export const OrderServices = {
   deleteOrderIntoDB,
   generateOrderInvoicePdf,
   getProductsGroupedByCategory,
+  getProductSegmentation
 };
