@@ -32,7 +32,7 @@ router.patch(
   "/change-password/:id",
   auth("admin", "salesUser", "warehouseUser", "driver"),
   UserControllers.changePassword
-);
+); 
 
 router.post("/forgot-password", sendResetOTP);
 router.post("/reset-password", handleResetPassword);
