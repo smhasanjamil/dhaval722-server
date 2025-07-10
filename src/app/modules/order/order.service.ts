@@ -32,8 +32,11 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
     );
   }
 
-  if (checkExistingStore.isDeleted ==  true) {
-    throw new AppError(httpStatus.BAD_REQUEST, "This customer store was deleted!");
+  if (checkExistingStore.isDeleted == true) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "This customer store was deleted!"
+    );
   }
 
   // Step 1: Verify all product IDs exist
@@ -262,11 +265,79 @@ const getProductsGroupedByCategory = async () => {
   return grouped;
 };
 
-const getProductSegmentation = async()=>{
+// Best and worst selling product for dashboard
+const getProductSalesStats = async () => {
+  const stats = await OrderModel.aggregate([
+    { $match: { isDeleted: false } },
+    { $unwind: "$products" },
+    {
+      $group: {
+        _id: {
+          productId: "$products.productId",
+          orderId: "$_id"
+        },
+        quantity: { $sum: "$products.quantity" },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.productId",
+        totalQuantity: { $sum: "$quantity" },
+        numberOfOrders: { $sum: 1 },
+      },
+    },
+    {
+      $addFields: {
+        orderScore: { $multiply: ["$totalQuantity", "$numberOfOrders"] },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalMarketQuantity: { $sum: "$totalQuantity" },
+        products: { $push: "$$ROOT" },
+      },
+    },
+    { $unwind: "$products" },
+    {
+      $project: {
+        _id: "$products._id",
+        totalQuantity: "$products.totalQuantity",
+        numberOfOrders: "$products.numberOfOrders",
+        orderScore: "$products.orderScore",
+        revenuePercentage: {
+          $multiply: [
+            { $divide: ["$products.totalQuantity", "$totalMarketQuantity"] },
+            100,
+          ],
+        },
+      },
+    },
+  ]);
 
-  const orders = await OrderModel.find();
-  
-}
+  const enriched = await Promise.all(
+    stats.map(async (item) => {
+      const product = await ProductModel.findById(item._id).lean();
+      return {
+        ...item,
+        name: product?.name || "Unknown Product",
+        itemNumber: product?.itemNumber || null,
+      };
+    })
+  );
+
+  return enriched;
+};
+
+const getBestSellingProducts = async (limit: number) => {
+  const stats = await getProductSalesStats();
+  return stats.sort((a, b) => b.orderScore - a.orderScore).slice(0, limit);
+};
+
+const getWorstSellingProducts = async (limit: number) => {
+  const stats = await getProductSalesStats();
+  return stats.sort((a, b) => a.orderScore - b.orderScore).slice(0, limit);
+};
 
 export const OrderServices = {
   createOrderIntoDB,
@@ -276,5 +347,6 @@ export const OrderServices = {
   deleteOrderIntoDB,
   generateOrderInvoicePdf,
   getProductsGroupedByCategory,
-  getProductSegmentation
+  getBestSellingProducts,
+  getWorstSellingProducts,
 };

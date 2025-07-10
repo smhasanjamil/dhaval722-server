@@ -95,7 +95,7 @@ const getProductsGroupedByCategory = catchAsync(
   async (req: Request, res: Response) => {
     const result = await OrderServices.getProductsGroupedByCategory();
 
-       // ✅ Check if client wants Excel export
+    // ✅ Check if client wants Excel export
     const shouldDownload = req.query.download === "true";
 
     if (shouldDownload) {
@@ -111,6 +111,35 @@ const getProductsGroupedByCategory = catchAsync(
   }
 );
 
+// Best and worst selling product for dashboard
+export const getBestSellingProductsController = catchAsync(
+  async (req: Request, res: Response) => {
+    const limit = Number(req.query.limit) || 10;
+    const data = await OrderServices.getBestSellingProducts(limit);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Best selling products fetched successfully",
+      data,
+    });
+  }
+);
+
+export const getWorstSellingProductsController = catchAsync(
+  async (req: Request, res: Response) => {
+    const limit = Number(req.query.limit) || 10;
+    const data = await OrderServices.getWorstSellingProducts(limit);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Worst selling products fetched successfully",
+      data,
+    });
+  }
+);
+
 export const OrderControllers = {
   createOrder,
   getAllOrders,
@@ -119,4 +148,6 @@ export const OrderControllers = {
   deleteOrder,
   getOrderInvoicePdf,
   getProductsGroupedByCategory,
+  getBestSellingProductsController,
+  getWorstSellingProductsController,
 };
