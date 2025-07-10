@@ -20,13 +20,13 @@ const containerSchema = new Schema<IContainer>(
 
     containerProducts: [
       {
-        productId: {
-          type: Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        packetSize: { type: Number, required: true }, 
-        productQuantity: { type: Number, required: true },
+        category:{ type: String, required: true },
+        itemNumber:{ type: String, required: true},
+        packetSize: { type: String, required: true }, 
+        quantity: { type: Number, required: true },
+        perCaseCost: { type: Number, required: true },
+        purchasePrice: { type: Number, required: true },
+        salesPrice: { type: Number, required: true },
       },
     ],
   },

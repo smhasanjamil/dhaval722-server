@@ -79,19 +79,29 @@ const deleteContainer = catchAsync(async (req: Request, res: Response) => {
 
 
 const xlImportToAddContainer = catchAsync(async (req: Request, res: Response) => {
-
   if (!req.file) {
     throw new AppError(httpStatus.BAD_REQUEST, 'No file uploaded');
   }
 
-    const result = await ContainerServices.xlImportToAddContainerIntoDB(req.file!.buffer);
+  // Extract additional fields
+  const { containerNumber, containerName, containerStatus, deliveryDate } = req.body;
 
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: 'XLSX decoded and containers inserted successfully',
-        data: result,
-    });
+  // Validate as needed
+  if (!containerNumber || !containerName || !deliveryDate) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Required container fields are missing');
+  }
+
+  const result = await ContainerServices.xlImportToAddContainerIntoDB(
+    req.file.buffer,
+    { containerNumber, containerName, containerStatus, deliveryDate }
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'XLSX decoded and containers inserted successfully',
+    data: result,
+  });
 });
 
 export const ContainerControllers = {

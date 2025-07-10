@@ -4,7 +4,6 @@ import {
   IProduct,
   WeightUnit,
 } from "./product.interface";
-import { number } from "zod";
 
 const ProductSchema = new Schema<IProduct>(
   {
@@ -43,9 +42,9 @@ const ProductSchema = new Schema<IProduct>(
       required: true,
     },
 
-    backDoorQuantity: {
+    incomingQuantity: {
       type: Number,
-      required: true,
+      default: 0,
     },
 
     reorderPointOfQuantity: {
