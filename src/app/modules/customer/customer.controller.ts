@@ -8,12 +8,16 @@ import AppError from "../../errors/AppError";
 
 const createCustomer = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
-  const result = await CustomerServices.createCustomerIntoDB(body);
 
-  const existing = await CustomerModel.findOne({storeName: body.storeName})
-  if(existing){
-        throw new AppError(httpStatus.BAD_REQUEST, "Customer store already exists with this name!");
+  const existing = await CustomerModel.findOne({ storeName: body.storeName });
+  if (existing) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Customer store already exists with this name!"
+    );
   }
+
+  const result = await CustomerServices.createCustomerIntoDB(body);
 
   sendResponse(res, {
     success: true,
