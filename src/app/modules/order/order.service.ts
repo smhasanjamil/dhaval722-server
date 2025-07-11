@@ -27,8 +27,8 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
   }
   if (checkExistingStore.isDeleted === true) {
     throw new AppError(httpStatus.BAD_REQUEST, "This customer store was deleted!");
-  }
 
+  }
   // Verify each product existence individually
   let totalSalesPrice = 0;
   let totalPurchasePrice = 0;
@@ -44,8 +44,8 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
       );
     }
 
-    const salesPrice = productDetails.salesPrice || 0;
-    const purchasePrice = productDetails.purchasePrice || 0;
+    const salesPrice = productDetails?.salesPrice || 0;
+    const purchasePrice = productDetails?.purchasePrice || 0;
     const quantity = product.quantity || 1;
     const discount = product.discount || 0;
 
@@ -231,6 +231,79 @@ function getCombinations<T>(array: T[], size: number): T[][] {
   combine(0, []);
   return results;
 }
+// Best and worst selling product for dashboard
+const getProductSalesStats = async () => {
+  const stats = await OrderModel.aggregate([
+    { $match: { isDeleted: false } },
+    { $unwind: "$products" },
+    {
+      $group: {
+        _id: {
+          productId: "$products.productId",
+          orderId: "$_id"
+        },
+        quantity: { $sum: "$products.quantity" },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.productId",
+        totalQuantity: { $sum: "$quantity" },
+        numberOfOrders: { $sum: 1 },
+      },
+    },
+    {
+      $addFields: {
+        orderScore: { $multiply: ["$totalQuantity", "$numberOfOrders"] },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalMarketQuantity: { $sum: "$totalQuantity" },
+        products: { $push: "$$ROOT" },
+      },
+    },
+    { $unwind: "$products" },
+    {
+      $project: {
+        _id: "$products._id",
+        totalQuantity: "$products.totalQuantity",
+        numberOfOrders: "$products.numberOfOrders",
+        orderScore: "$products.orderScore",
+        revenuePercentage: {
+          $multiply: [
+            { $divide: ["$products.totalQuantity", "$totalMarketQuantity"] },
+            100,
+          ],
+        },
+      },
+    },
+  ]);
+
+  const enriched = await Promise.all(
+    stats.map(async (item) => {
+      const product = await ProductModel.findById(item._id).lean();
+      return {
+        ...item,
+        name: product?.name || "Unknown Product",
+        itemNumber: product?.itemNumber || null,
+      };
+    })
+  );
+
+  return enriched;
+};
+
+const getBestSellingProducts = async (limit: number) => {
+  const stats = await getProductSalesStats();
+  return stats.sort((a, b) => b.orderScore - a.orderScore).slice(0, limit);
+};
+
+const getWorstSellingProducts = async (limit: number) => {
+  const stats = await getProductSalesStats();
+  return stats.sort((a, b) => a.orderScore - b.orderScore).slice(0, limit);
+};
 
 
 const getProductSegmentation = async (topN: number = 10): Promise<{ combination: string[]; frequency: number }[]> => {
@@ -286,5 +359,7 @@ export const OrderServices = {
   deleteOrderIntoDB,
   generateOrderInvoicePdf,
   getProductsGroupedByCategory,
+  getBestSellingProducts,
+  getWorstSellingProducts,
   getProductSegmentation
-};
+}

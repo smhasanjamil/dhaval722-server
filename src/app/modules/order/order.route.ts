@@ -10,18 +10,30 @@ router.post(
   OrderControllers.createOrder
 );
 
-router.get("/", 
-  // auth("admin"), 
- OrderControllers.getAllOrders);
+router.get(
+  "/",
+  // auth("admin"),
+  OrderControllers.getAllOrders
+);
 
-router.get("/orderInvoice/:id", 
-  // auth("admin"), 
- OrderControllers.getOrderInvoicePdf);
+router.get(
+  "/orderInvoice/:id",
+  // auth("admin"),
+  OrderControllers.getOrderInvoicePdf
+);
 
 // Get Products Grouped By Category
-router.get("/bulk-order-excel-empty", OrderControllers.getProductsGroupedByCategory);
+router.get(
+  "/bulk-order-excel-empty",
+  OrderControllers.getProductsGroupedByCategory
+);
 
-
+// Best and worst selling product for dashboard
+router.get("/best-selling", OrderControllers.getBestSellingProductsController);
+router.get(
+  "/worst-selling",
+  OrderControllers.getWorstSellingProductsController
+);
 
 router.get(
   "/getProductSegmentation",
@@ -36,8 +48,6 @@ router.get(
   OrderControllers.getSingleOrder
 );
 
-
-
 router.delete("/:id", auth("admin"), OrderControllers.deleteOrder);
 
 router.patch(
@@ -45,6 +55,5 @@ router.patch(
   // auth("admin"),
   OrderControllers.updateOrder
 );
-
 
 export const OrderRoutes = router;
