@@ -24,6 +24,13 @@ router.get("/bulk-order-excel-empty", OrderControllers.getProductsGroupedByCateg
 
 
 router.get(
+  "/getProductSegmentation",
+  // auth("admin"),
+  OrderControllers.getProductSegmentationCtrl
+);
+
+
+router.get(
   "/:id",
   // auth("admin"),
   OrderControllers.getSingleOrder
