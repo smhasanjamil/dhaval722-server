@@ -9,7 +9,7 @@ import { ProductService } from "../product/product.service";
 
 
 export const createContainerIntoDB = async (payLoad: IContainer) => {
-  const { containerNumber, containerProducts, containerStatus } = payLoad;
+  const { containerNumber, containerProducts, containerStatus, shippingCost } = payLoad;
 
   // Check if container number is already in use
   const checkExistingContainer = await ContainerModel.findOne({
@@ -51,7 +51,7 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
     enrichedContainerProducts.push({
       category: p.category,
       itemNumber: p.itemNumber,
-      packetSize: p.packetSize,
+      // packetSize: p.packetSize,
       quantity: p.quantity,
       perCaseCost: perCaseCost,
       purchasePrice: p.purchasePrice,
@@ -68,13 +68,10 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
   const containerData = {
     containerNumber: payLoad.containerNumber,
     containerName: payLoad.containerName,
-    containerName: payLoad.containerName,
     containerStatus: payLoad.containerStatus || "onTheWay",
     deliveryDate: payLoad.deliveryDate,
     containerProducts: enrichedContainerProducts,
-    isDeleted: false,
-    containerProducts: enrichedContainerProducts,
-    isDeleted: false,
+    shippingCost: payLoad.shippingCost
   };
 
   const createdContainer = await ContainerModel.create(containerData);
@@ -90,12 +87,12 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
 
 
 const getAllContainersFromDB = async () => {
-  const result = await ContainerModel.find({ isDeleted: false }).populate("containerProducts.productId");
+  const result = await ContainerModel.find({ isDeleted: false });
   return result;
 };
 
 const getSingleContainerFromDB = async (id: string) => {
-  const result = await ContainerModel.findOne({ _id: id, isDeleted: false }).populate("containerProducts.productId");
+  const result = await ContainerModel.findOne({ _id: id, isDeleted: false });
   return result;
 };
 
@@ -113,7 +110,7 @@ const updateContainerIntoDB = async (id: string, payload: Partial<IContainer>) =
     { new: true, runValidators: true } 
   )
     .where({ isDeleted: false })
-    .populate("containerProducts.productId");
+;
 
   if (!updatedContainer) {
     throw new AppError(httpStatus.NOT_FOUND, "Container not found or already deleted");
@@ -144,6 +141,7 @@ const xlImportToAddContainerIntoDB = async (
     containerName: string;
     containerStatus?: "arrived" | "onTheWay";
     deliveryDate: string;
+    shippingCost: number
   }
 ) => {
   // 1️⃣ Parse items from XLSX
@@ -155,7 +153,8 @@ const xlImportToAddContainerIntoDB = async (
     containerName: containerDetails.containerName,
     containerStatus: containerDetails.containerStatus || "onTheWay",
     deliveryDate: containerDetails.deliveryDate,
-    containerProducts: jsonData, // ✅ use the items here
+    shippingCost: containerDetails.shippingCost,
+    containerProducts: jsonData,
     isDeleted: false,
   };
 

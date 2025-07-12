@@ -45,3 +45,50 @@ export const sendResetPasswordOTP = async (email: string, otp: string) => {
 
   await sendMail({ to: email, subject, text, html });
 };
+
+export const sendProspectDutyEmailToSalesPerson = async (
+  salesEmail: string,
+  prospectId: string,
+  prospectStoreName: string
+) => {
+  const subject = "📌 New Prospect Assigned to You";
+
+  const prospectLink = `https://your-frontend-domain.com/prospects/${prospectId}`;
+
+  const text = `You have been assigned a new prospect: ${prospectStoreName}. Please log in to your dashboard to view and follow up with this prospect.`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" width="120"/>
+      </div>
+      <h2 style="color: #4CAF50; text-align: center;">New Prospect Assigned 🎯</h2>
+      <p style="font-size: 16px; color: #333;">
+        Hello,
+      </p>
+      <p style="font-size: 16px; color: #333;">
+        You have been assigned to follow up with a new prospect:
+      </p>
+      <p style="font-size: 18px; font-weight: bold; color: #000;">
+        ${prospectStoreName}
+      </p>
+      <p style="font-size: 16px; color: #333;">
+        Please log in to your Arbora Sales Dashboard to review the details and take the necessary next steps.
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${prospectLink}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-size: 16px;">
+          View Prospect
+        </a>
+      </div>
+      <p style="font-size: 14px; color: #777; text-align: center;">
+        Thank you for staying proactive in growing our customer relationships.
+      </p>
+      <p style="font-size: 14px; color: #777; text-align: center;">
+        - Arbora Team
+      </p>
+    </div>
+  `;
+
+  await sendMail({ to: salesEmail, subject, text, html });
+};
+

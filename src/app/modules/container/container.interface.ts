@@ -9,11 +9,12 @@ export interface IContainer {
     containerProducts: {
         category: string,
         itemNumber: string,
-        packetSize: number;
+        // packetSize: number;
         quantity: number,
         purchasePrice: number,
         salesPrice: number,
         perCaseCost: number
     }[],
+    shippingCost?: number; 
     isDeleted: boolean
 }

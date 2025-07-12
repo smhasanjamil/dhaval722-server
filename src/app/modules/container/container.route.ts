@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post(
   "/",
-  auth("admin"),
+  // auth("admin"),
   ContainerControllers.createContainer
 );
 
@@ -19,7 +19,7 @@ router.post(
 );
 
 router.get("/", 
-  auth("admin"), 
+  // auth("admin"), 
   ContainerControllers.getAllContainers);
 
 router.get(
@@ -28,11 +28,13 @@ router.get(
   ContainerControllers.getSingleContainer
 );
 
-router.delete("/:id", auth("admin"), ContainerControllers.deleteContainer);
+router.delete("/:id", 
+  // auth("admin"), 
+  ContainerControllers.deleteContainer);
 
 router.patch(
   "/:id",
-  auth("admin"),
+  // auth("admin"),
   ContainerControllers.updateContainer
 );
 

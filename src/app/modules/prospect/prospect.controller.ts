@@ -28,6 +28,18 @@ const getAllProspects = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyProspects = catchAsync(async (req: Request, res: Response) => {
+  const user = req?.user
+  const result = await ProspectServices.getMyProspectsFromDB(user?.email);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Your Assigned Prospects fetched successfully",
+    data: result,
+  });
+});
+
 const getSingleProspect = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProspectServices.getSingleProspectFromDB(id);
@@ -89,4 +101,5 @@ export const ProspectControllers = {
   updateProspect,
   deleteProspect,
   makeCustomer,
+  getMyProspects
 };

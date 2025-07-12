@@ -84,7 +84,7 @@ const xlImportToAddContainer = catchAsync(async (req: Request, res: Response) =>
   }
 
   // Extract additional fields
-  const { containerNumber, containerName, containerStatus, deliveryDate } = req.body;
+  const { containerNumber, containerName, containerStatus, deliveryDate, shippingCost } = req.body;
 
   // Validate as needed
   if (!containerNumber || !containerName || !deliveryDate) {
@@ -93,7 +93,7 @@ const xlImportToAddContainer = catchAsync(async (req: Request, res: Response) =>
 
   const result = await ContainerServices.xlImportToAddContainerIntoDB(
     req.file.buffer,
-    { containerNumber, containerName, containerStatus, deliveryDate }
+    { containerNumber, containerName, containerStatus, deliveryDate , shippingCost}
   );
 
   sendResponse(res, {
