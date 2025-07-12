@@ -1,9 +1,15 @@
 import { Router } from "express";
 import { ProspectControllers } from "./prospect.controller";
+import auth from "../../middlewares/auth";
 
 const router = Router();
 
 router.get("/", ProspectControllers.getAllProspects);
+
+router.get("/getMyProspects", 
+  auth("salesUser"),
+  ProspectControllers.getMyProspects);
+
 router.get("/:id", ProspectControllers.getSingleProspect);
 
 router.post(

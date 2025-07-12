@@ -17,12 +17,12 @@ const containerSchema = new Schema<IContainer>(
     },
 
     deliveryDate: { type: String, required: true },
-
+    shippingCost: { type: Number},
     containerProducts: [
       {
         category:{ type: String, required: true },
         itemNumber:{ type: String, required: true},
-        packetSize: { type: String, required: true }, 
+        // packetSize: { type: String, required: true }, 
         quantity: { type: Number, required: true },
         perCaseCost: { type: Number, required: true },
         purchasePrice: { type: Number, required: true },

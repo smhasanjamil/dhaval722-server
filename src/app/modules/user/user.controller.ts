@@ -4,7 +4,6 @@ import sendResponse from "../../utils/sendResponse";
 import { Request, Response } from "express";
 import { requestPasswordReset, resetPasswordWithOTP, UserServices } from "./user.service";
 import { UserModel } from "./user.model";
-import AppError from "../../errors/AppError";
 
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
