@@ -12,6 +12,7 @@ export interface ICustomer {
     billingState: string,
     billingZipcode: string,
     billingCity: string,
+    isCustomerSourceProspect: boolean,
     shippingAddress: string,
     shippingState: string,
     shippingZipcode: string,

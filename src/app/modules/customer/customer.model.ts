@@ -46,6 +46,7 @@ export const customerUpdateSchema = new Schema<Partial<ICustomer>>(
       enum: ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"],
     },
     bankACHAccountInfo: { type: String },
+    isCustomerSourceProspect: {type: Boolean, default: false},
     storePersonName: { type: String },
     storePersonPhone: { type: String },
     billingAddress: { type: String },

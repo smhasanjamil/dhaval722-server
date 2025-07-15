@@ -34,6 +34,7 @@ export interface IProspect {
         productObjId: Types.ObjectId,
         itemNumber: string,
         itemName: string,
+        packSize: string,
         price: number,
     }[]
 

@@ -50,6 +50,7 @@ const prospectSchema = new Schema<IProspect>(
         },
         itemNumber: { type: String, required: true },
         itemName: { type: String, required: true },
+        packSize: { type: String, required: true},
         price: { type: Number, required: true },
       },
     ],

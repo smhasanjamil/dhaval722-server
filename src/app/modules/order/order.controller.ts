@@ -115,7 +115,7 @@ const getProductSegmentationCtrl = catchAsync(
   async (req: Request, res: Response) => {
     const result = await OrderServices.getProductSegmentation();
 
-    // ✅ Check if client wants Excel export
+       // ✅ Check if client wants Excel export
     const shouldDownload = req.query.download === "true";
 
     if (shouldDownload) {
@@ -131,6 +131,9 @@ const getProductSegmentationCtrl = catchAsync(
   }
 );
 
+
+
+// Best and worst selling product for dashboard
 export const getBestSellingProductsController = catchAsync(
   async (req: Request, res: Response) => {
     const limit = Number(req.query.limit) || 10;
@@ -186,3 +189,4 @@ export const OrderControllers = {
   getWorstSellingProductsController,
   getChart
 };
+  

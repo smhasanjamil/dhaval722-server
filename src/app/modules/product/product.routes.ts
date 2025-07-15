@@ -5,9 +5,11 @@ import { productValidation } from "./product.validation";
 
 const router = Router();
 
+router.get("/by-category/:categoryId", ProductController.getProductsByCategory);
 router.get("/", ProductController.getAllProducts);
 router.get("/packet-sizes", ProductController.getAllPacketSizes);
 router.get("/:id", ProductController.getSingleProduct);
+
 
 
 router.post(
