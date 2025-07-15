@@ -7,6 +7,7 @@ import { ProductModel } from "../product/product.model";
 import { generateSalesOrderInvoicePdf } from "../../utils/pdfCreate";
 import { CustomerModel } from "../customer/customer.model";
 
+
 const createOrderIntoDB = async (payLoad: IOrder) => {
   const { invoiceNumber, products } = payLoad;
 
@@ -16,20 +17,13 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
     isDeleted: false,
   });
   if (checkExistingOrder) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "This invoice number is already in use!"
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, "This invoice number is already in use!");
   }
 
-  console.log("cus:", payLoad.storeId);
-
+  // Check if store exists and is not deleted
   const checkExistingStore = await CustomerModel.findById(payLoad?.storeId);
   if (!checkExistingStore) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "This customer store does not exist!"
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, "This customer store does not exist!");
   }
 
   if (checkExistingStore.isDeleted == true) {
@@ -37,79 +31,40 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
       httpStatus.BAD_REQUEST,
       "This customer store was deleted!"
     );
+
   }
 
-  // Step 1: Verify all product IDs exist
-  console.log("Step 1: Verifying product IDs...");
-  const productIds = products.map((p) => p.productId);
-  const existingProducts = await ProductModel.find({
-    _id: { $in: productIds },
-  });
-
-  if (existingProducts.length !== productIds.length) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "One or more products not found!"
-    );
-  }
-  console.log("All product IDs are valid.");
-
-  // Step 2: Calculate discountGiven from products array
-  console.log("Step 2: Calculating total discount...");
-  const discountGiven = products.reduce((total, product) => {
-    const discount = product.discount || 0;
-    console.log(`Product ID ${product.productId}: Discount = ${discount}`);
-    return total + discount;
-  }, 0);
-  console.log(`Total discountGiven: ${discountGiven}`);
-
-  // Step 3: Calculate orderAmount using salesPrice from ProductModel
-  console.log("Step 3: Calculating order amount...");
+  // Verify each product existence individually
   let totalSalesPrice = 0;
-  for (const product of products) {
-    const productDetails = existingProducts.find(
-      (p) => p._id.toString() === product.productId.toString()
-    );
-    if (productDetails) {
-      const productTotal =
-        (productDetails.salesPrice || 0) * (product.quantity || 1);
-      console.log(
-        `Product ID ${product.productId}: SalesPrice = ${productDetails.salesPrice}, Quantity = ${product.quantity}, Total = ${productTotal}`
-      );
-      totalSalesPrice += productTotal;
-    }
-  }
-  const orderAmount = totalSalesPrice - discountGiven;
-  console.log(
-    `Total sales price: ${totalSalesPrice}, OrderAmount after discount: ${orderAmount}`
-  );
-
-  // Step 4: Calculate profitAmount using purchasePrice from ProductModel
-  console.log("Step 4: Calculating profit amount...");
   let totalPurchasePrice = 0;
-  for (const product of products) {
-    const productDetails = existingProducts.find(
-      (p) => p._id.toString() === product.productId.toString()
-    );
-    if (productDetails) {
-      const productPurchaseTotal =
-        (productDetails.purchasePrice || 0) * (product.quantity || 1);
-      console.log(
-        `Product ID ${product.productId}: PurchasePrice = ${productDetails.purchasePrice}, Quantity = ${product.quantity}, Total = ${productPurchaseTotal}`
-      );
-      totalPurchasePrice += productPurchaseTotal;
-    }
-  }
-  const profitAmount = orderAmount - totalPurchasePrice;
-  console.log(
-    `Total purchase price: ${totalPurchasePrice}, ProfitAmount: ${profitAmount}`
-  );
+  let discountGiven = 0;
 
-  // Step 5: Calculate profitPercentage
-  console.log("Step 5: Calculating profit percentage...");
+  for (const product of products) {
+    const productDetails = await ProductModel.findById(product.productId);
+
+    if (!productDetails) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Product not found: Product ID ${product.productId}`
+      );
+    }
+
+    const salesPrice = productDetails.salesPrice || 0;
+    const purchasePrice = productDetails.purchasePrice || 0;
+    const quantity = product.quantity || 1;
+    const discount = product.discount || 0;
+
+    totalSalesPrice += salesPrice * quantity;
+    totalPurchasePrice += purchasePrice * quantity;
+    discountGiven += discount;
+  }
+
+  const orderAmount = totalSalesPrice - discountGiven;
+  const profitAmount = orderAmount - totalPurchasePrice;
   const profitPercentage =
     totalPurchasePrice > 0 ? (profitAmount / totalPurchasePrice) * 100 : 0;
-  console.log(`ProfitPercentage: ${profitPercentage.toFixed(2)}%`);
+  const openBalance =
+    orderAmount - (payLoad.paymentAmountReceived || 0) - discountGiven;
 
   // Prepare order data
   const orderData = {
@@ -122,20 +77,17 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
     orderStatus: payLoad.orderStatus || "verified",
     paymentAmountReceived: payLoad.paymentAmountReceived || 0,
     discountGiven,
-    openBalance:
-      orderAmount - (payLoad.paymentAmountReceived || 0) - discountGiven,
+    openBalance,
     profitAmount,
     profitPercentage,
     paymentStatus: payLoad.paymentStatus || "notPaid",
     products: payLoad.products,
   };
 
-  console.log("Step 6: Creating order in database...");
   const createdOrder = await OrderModel.create(orderData);
-  console.log("Order created successfully.");
-
   return createdOrder;
 };
+
 
 const generateOrderInvoicePdf = async (id: string): Promise<Buffer> => {
   const order = await OrderModel.findOne({ _id: id, isDeleted: false })
@@ -338,6 +290,71 @@ const getWorstSellingProducts = async (limit: number) => {
   const stats = await getProductSalesStats();
   return stats.sort((a, b) => a.orderScore - b.orderScore).slice(0, limit);
 };
+// Helper function to generate combinations of 2 or 3 elements from an array
+function getCombinations<T>(array: T[], size: number): T[][] {
+  const results: T[][] = [];
+  
+  function combine(start: number, current: T[]) {
+    if (current.length === size) {
+      results.push([...current]);
+      return;
+    }
+    for (let i = start; i < array.length; i++) {
+      current.push(array[i]);
+      combine(i + 1, current);
+      current.pop();
+    }
+  }
+  
+  combine(0, []);
+  return results;
+}
+
+
+const getProductSegmentation = async (topN: number = 10): Promise<{ combination: string[]; frequency: number }[]> => {
+  const orders = await OrderModel.find({ isDeleted: false }).lean();
+  
+  // Fetch all product IDs from orders
+  const productIds = [...new Set(orders.flatMap(order => order.products.map(p => p.productId.toString())))];
+  
+  // Fetch product names from ProductModel
+  const products = await ProductModel.find({ _id: { $in: productIds } }).select('_id name').lean();
+  const productNameMap = new Map(products.map(p => [p._id.toString(), p.name || 'Unknown Product']));
+  
+  // Dictionary to store combination frequencies
+  const combinationCounts: { [key: string]: number } = {};
+
+  // Process each order
+  for (const order of orders) {
+    // Extract product IDs from the order
+    const productIds = order.products.map(p => p.productId.toString()).sort();
+    
+    // Generate combinations of 2 and 3 products
+    const combinations2 = getCombinations(productIds, 2);
+    const combinations3 = getCombinations(productIds, 3);
+    
+    // Combine all combinations
+    const allCombinations = [...combinations2, ...combinations3];
+    
+    // Count frequency of each combination
+    for (const combo of allCombinations) {
+      const comboKey = combo.join(",");
+      combinationCounts[comboKey] = (combinationCounts[comboKey] || 0) + 1;
+    }
+  }
+
+  // Convert to array and sort by frequency
+  const result = Object.entries(combinationCounts)
+    .map(([key, frequency]) => ({
+      combination: key.split(",").map(id => productNameMap.get(id) || 'Unknown Product'),
+      frequency,
+    }))
+    .sort((a, b) => b.frequency - a.frequency || a.combination.length - b.combination.length)
+    .slice(0, topN);
+
+  return result;
+};
+
 
 export const OrderServices = {
   createOrderIntoDB,
@@ -349,4 +366,5 @@ export const OrderServices = {
   getProductsGroupedByCategory,
   getBestSellingProducts,
   getWorstSellingProducts,
+  getProductSegmentation
 };

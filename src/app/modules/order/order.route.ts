@@ -36,6 +36,13 @@ router.get(
 );
 
 router.get(
+  "/getProductSegmentation",
+  // auth("admin"),
+  OrderControllers.getProductSegmentationCtrl
+);
+
+
+router.get(
   "/:id",
   // auth("admin"),
   OrderControllers.getSingleOrder

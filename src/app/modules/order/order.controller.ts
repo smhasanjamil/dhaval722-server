@@ -111,6 +111,28 @@ const getProductsGroupedByCategory = catchAsync(
   }
 );
 
+const getProductSegmentationCtrl = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await OrderServices.getProductSegmentation();
+
+       // ✅ Check if client wants Excel export
+    const shouldDownload = req.query.download === "true";
+
+    if (shouldDownload) {
+      return exportGroupedProductsToExcel(result, res);
+    }
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Products segmented ..",
+      data: result,
+    });
+  }
+);
+
+
+
 // Best and worst selling product for dashboard
 export const getBestSellingProductsController = catchAsync(
   async (req: Request, res: Response) => {
@@ -148,6 +170,7 @@ export const OrderControllers = {
   deleteOrder,
   getOrderInvoicePdf,
   getProductsGroupedByCategory,
+  getProductSegmentationCtrl,
   getBestSellingProductsController,
   getWorstSellingProductsController,
 };
