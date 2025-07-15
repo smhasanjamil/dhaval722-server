@@ -10,7 +10,7 @@ import { generateProductItemNumber } from "../../utils/generateProductItemNumber
 const createProduct = catchAsync(async (req: Request, res: Response) => {
   const payload: IProduct = req.body;
   const result = await ProductService.createProductInDB(payload);
-generateProductItemNumber();
+  generateProductItemNumber();
 
   sendResponse(res, {
     statusCode: status.CREATED,
@@ -84,11 +84,26 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get products grouped by category
+const getProductsGroupedByCategory = catchAsync(
+  async (_req: Request, res: Response) => {
+    const result = await ProductService.getProductsGroupedByCategoryFromDB();
+
+    sendResponse(res, {
+      statusCode: status.OK,
+      success: true,
+      message: "Products grouped by category fetched successfully",
+      data: result,
+    });
+  }
+);
+
 export const ProductController = {
   createProduct,
   getAllProducts,
   getSingleProduct,
   updateProduct,
   deleteProduct,
-  getAllPacketSizes
+  getAllPacketSizes,
+  getProductsGroupedByCategory,
 };

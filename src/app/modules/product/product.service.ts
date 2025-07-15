@@ -5,7 +5,7 @@ import { ProductModel } from "./product.model";
 import { CategoryModel } from "../category/category.model";
 import { generateProductItemNumber } from "../../utils/generateProductItemNumber";
 
-const createProductInDB = async ( payload: IProduct | IProduct[]) => {
+const createProductInDB = async (payload: IProduct | IProduct[]) => {
   // Ensure we're always working with an array internally
   const productsArray = Array.isArray(payload) ? payload : [payload];
 
@@ -15,7 +15,12 @@ const createProductInDB = async ( payload: IProduct | IProduct[]) => {
     // 1️⃣ Validate category
     const category = await CategoryModel.findById(productPayload.categoryId);
     if (!category) {
-      throw new AppError(status.NOT_FOUND, `Category not found for product: ${productPayload.name || "Unnamed Product"}`);
+      throw new AppError(
+        status.NOT_FOUND,
+        `Category not found for product: ${
+          productPayload.name || "Unnamed Product"
+        }`
+      );
     }
 
     // 2️⃣ Check duplicate barcode or item number
@@ -45,19 +50,24 @@ const createProductInDB = async ( payload: IProduct | IProduct[]) => {
 
 // Get All Products From DB
 const getAllProductsFromDB = async () => {
-  return await ProductModel.find({ isDeleted: false }).sort({ createdAt: -1 }).populate("categoryId");
+  return await ProductModel.find({ isDeleted: false })
+    .sort({ createdAt: -1 })
+    .populate("categoryId");
 };
 
 const getAllPacketSizesFromDB = async () => {
-  const packetSizes = await ProductModel.distinct("packetSize", { isDeleted: false });
+  const packetSizes = await ProductModel.distinct("packetSize", {
+    isDeleted: false,
+  });
   return packetSizes;
 };
 
-
-
 // Get single product
 const getSingleProductFromDB = async (id: string) => {
-  const product = await ProductModel.findOne({ _id: id, isDeleted: false }).populate("categoryId");
+  const product = await ProductModel.findOne({
+    _id: id,
+    isDeleted: false,
+  }).populate("categoryId");
 
   if (!product) {
     throw new AppError(status.NOT_FOUND, "Product not found");
@@ -66,11 +76,13 @@ const getSingleProductFromDB = async (id: string) => {
   return product;
 };
 
-
 // Update product
 const updateProductInDB = async (id: string, payload: Partial<IProduct>) => {
   // 1. Check if product exists and not deleted
-  const existingProduct = await ProductModel.findOne({ _id: id, isDeleted: false });
+  const existingProduct = await ProductModel.findOne({
+    _id: id,
+    isDeleted: false,
+  });
   if (!existingProduct) {
     throw new AppError(status.NOT_FOUND, "Product not found");
   }
@@ -111,7 +123,6 @@ const updateProductInDB = async (id: string, payload: Partial<IProduct>) => {
   return updatedProduct;
 };
 
-
 // Delete Product From DB
 
 const deleteProductFromDB = async (id: string) => {
@@ -127,6 +138,55 @@ const deleteProductFromDB = async (id: string) => {
   return deletedProduct;
 };
 
+const getProductsGroupedByCategoryFromDB = async () => {
+  const result = await ProductModel.aggregate([
+    {
+      $match: {
+        isDeleted: false,
+      },
+    },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "categoryId",
+        foreignField: "_id",
+        as: "category",
+      },
+    },
+    {
+      $unwind: "$category",
+    },
+    {
+      $group: {
+        _id: "$category._id",
+        categoryName: { $first: "$category.name" },
+        products: {
+          $push: {
+            _id: "$_id",
+            name: "$name",
+            itemNumber: "$itemNumber",
+            quantity: "$quantity",
+            salesPrice: "$salesPrice",
+            barcodeString: "$barcodeString",
+            weight: "$weight",
+            weightUnit: "$weightUnit",
+            packetSize: "$packetSize",
+            createdAt: "$createdAt",
+            updatedAt: "$updatedAt",
+          },
+        },
+        totalProducts: { $sum: 1 },
+      },
+    },
+    {
+      $sort: {
+        categoryName: 1, 
+      },
+    },
+  ]);
+
+  return result;
+};
 
 export const ProductService = {
   createProductInDB,
@@ -134,5 +194,6 @@ export const ProductService = {
   getSingleProductFromDB,
   updateProductInDB,
   deleteProductFromDB,
-  getAllPacketSizesFromDB
+  getAllPacketSizesFromDB,
+  getProductsGroupedByCategoryFromDB,
 };
