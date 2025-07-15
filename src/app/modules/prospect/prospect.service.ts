@@ -121,6 +121,7 @@ const makeCustomerFromProspect = async (id: string) => {
   // Create fully compatible customer data
   const customerData = {
     storeName: prospect.storeName,
+    isCustomerSourceProspect: true,
     storePhone: prospect.storePhone ?? "N/A",
     storePersonEmail: prospect.storePersonEmail ?? "noemail@provided.com",
     salesTaxId: prospect.salesTaxId ?? "N/A",
