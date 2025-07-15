@@ -115,7 +115,11 @@ const getProductSegmentationCtrl = catchAsync(
   async (req: Request, res: Response) => {
     const result = await OrderServices.getProductSegmentation();
 
+<<<<<<< .merge_file_bMRaXu
     // ✅ Check if client wants Excel export
+=======
+       // ✅ Check if client wants Excel export
+>>>>>>> .merge_file_SepoCP
     const shouldDownload = req.query.download === "true";
 
     if (shouldDownload) {
@@ -131,6 +135,12 @@ const getProductSegmentationCtrl = catchAsync(
   }
 );
 
+<<<<<<< .merge_file_bMRaXu
+=======
+
+
+// Best and worst selling product for dashboard
+>>>>>>> .merge_file_SepoCP
 export const getBestSellingProductsController = catchAsync(
   async (req: Request, res: Response) => {
     const limit = Number(req.query.limit) || 10;
@@ -184,5 +194,14 @@ export const OrderControllers = {
   getProductSegmentationCtrl,
   getBestSellingProductsController,
   getWorstSellingProductsController,
+<<<<<<< .merge_file_bMRaXu
   getChart
 };
+=======
+<<<<<<< HEAD
+};
+=======
+  getChart
+};
+>>>>>>> charts
+>>>>>>> .merge_file_SepoCP

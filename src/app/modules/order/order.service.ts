@@ -8,6 +8,7 @@ import { generateSalesOrderInvoicePdf } from "../../utils/pdfCreate";
 import { CustomerModel } from "../customer/customer.model";
 import { Types } from "mongoose";
 
+
 const createOrderIntoDB = async (payLoad: IOrder) => {
   const { invoiceNumber, products } = payLoad;
 
@@ -25,10 +26,14 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
   if (!checkExistingStore) {
     throw new AppError(httpStatus.BAD_REQUEST, "This customer store does not exist!");
   }
-  if (checkExistingStore.isDeleted === true) {
-    throw new AppError(httpStatus.BAD_REQUEST, "This customer store was deleted!");
+if (checkExistingStore.isDeleted == true) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "This customer store was deleted!"
+    );
 
   }
+
   // Verify each product existence individually
   let totalSalesPrice = 0;
   let totalPurchasePrice = 0;
@@ -44,8 +49,8 @@ const createOrderIntoDB = async (payLoad: IOrder) => {
       );
     }
 
-    const salesPrice = productDetails?.salesPrice || 0;
-    const purchasePrice = productDetails?.purchasePrice || 0;
+    const salesPrice = productDetails.salesPrice || 0;
+    const purchasePrice = productDetails.purchasePrice || 0;
     const quantity = product.quantity || 1;
     const discount = product.discount || 0;
 
@@ -304,6 +309,8 @@ const getWorstSellingProducts = async (limit: number) => {
   const stats = await getProductSalesStats();
   return stats.sort((a, b) => a.orderScore - b.orderScore).slice(0, limit);
 };
+
+
 
 
 const getProductSegmentation = async (topN: number = 10): Promise<{ combination: string[]; frequency: number }[]> => {
