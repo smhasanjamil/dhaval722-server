@@ -84,19 +84,20 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get products grouped by category
-const getProductsGroupedByCategory = catchAsync(
-  async (_req: Request, res: Response) => {
-    const result = await ProductService.getProductsGroupedByCategoryFromDB();
+// Get all products by category
+const getProductsByCategory = catchAsync(async (req: Request, res: Response) => {
+  const { categoryId } = req.params;
 
-    sendResponse(res, {
-      statusCode: status.OK,
-      success: true,
-      message: "Products grouped by category fetched successfully",
-      data: result,
-    });
-  }
-);
+  const result = await ProductService.getProductsByCategoryFromDB(categoryId);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Products fetched by category successfully",
+    data: result,
+  });
+});
+
 
 export const ProductController = {
   createProduct,
@@ -105,5 +106,5 @@ export const ProductController = {
   updateProduct,
   deleteProduct,
   getAllPacketSizes,
-  getProductsGroupedByCategory,
+  getProductsByCategory,
 };

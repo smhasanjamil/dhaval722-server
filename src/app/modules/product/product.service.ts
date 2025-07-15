@@ -138,55 +138,15 @@ const deleteProductFromDB = async (id: string) => {
   return deletedProduct;
 };
 
-const getProductsGroupedByCategoryFromDB = async () => {
-  const result = await ProductModel.aggregate([
-    {
-      $match: {
-        isDeleted: false,
-      },
-    },
-    {
-      $lookup: {
-        from: "categories",
-        localField: "categoryId",
-        foreignField: "_id",
-        as: "category",
-      },
-    },
-    {
-      $unwind: "$category",
-    },
-    {
-      $group: {
-        _id: "$category._id",
-        categoryName: { $first: "$category.name" },
-        products: {
-          $push: {
-            _id: "$_id",
-            name: "$name",
-            itemNumber: "$itemNumber",
-            quantity: "$quantity",
-            salesPrice: "$salesPrice",
-            barcodeString: "$barcodeString",
-            weight: "$weight",
-            weightUnit: "$weightUnit",
-            packetSize: "$packetSize",
-            createdAt: "$createdAt",
-            updatedAt: "$updatedAt",
-          },
-        },
-        totalProducts: { $sum: 1 },
-      },
-    },
-    {
-      $sort: {
-        categoryName: 1, 
-      },
-    },
-  ]);
+const getProductsByCategoryFromDB = async (categoryId: string) => {
+  const products = await ProductModel.find({
+    categoryId,
+    isDeleted: false,
+  }).populate("categoryId").sort({ createdAt: -1 });
 
-  return result;
+  return products;
 };
+
 
 export const ProductService = {
   createProductInDB,
@@ -195,5 +155,5 @@ export const ProductService = {
   updateProductInDB,
   deleteProductFromDB,
   getAllPacketSizesFromDB,
-  getProductsGroupedByCategoryFromDB,
+  getProductsByCategoryFromDB,
 };

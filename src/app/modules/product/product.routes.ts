@@ -5,7 +5,7 @@ import { productValidation } from "./product.validation";
 
 const router = Router();
 
-router.get("/group-by-category", ProductController.getProductsGroupedByCategory);
+router.get("/by-category/:categoryId", ProductController.getProductsByCategory);
 router.get("/", ProductController.getAllProducts);
 router.get("/packet-sizes", ProductController.getAllPacketSizes);
 router.get("/:id", ProductController.getSingleProduct);
