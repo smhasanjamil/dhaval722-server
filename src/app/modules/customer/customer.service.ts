@@ -3,6 +3,8 @@ import httpStatus from "http-status";
 import AppError from "../../errors/AppError";
 import { ICustomer } from "./customer.interface";
 import { CustomerModel } from "./customer.model";
+import { OrderModel } from "../order/order.model";
+import { Types } from "mongoose";
 
 const createCustomerIntoDB = async (payLoad: ICustomer) => {
   const { storePhone, storeName } = payLoad;
@@ -45,14 +47,65 @@ const createCustomerIntoDB = async (payLoad: ICustomer) => {
 };
 
 
+
 const getAllCustomersFromDB = async () => {
-  const result = await CustomerModel.find({ isDeleted: false });
+  // Fetch all non-deleted customers
+  const customers = await CustomerModel.find({ isDeleted: false }).lean();
+
+  // Fetch all non-deleted orders
+  const orders = await OrderModel.find({ isDeleted: false }).lean();
+
+  // Create maps for order count, openBalance sum, and totalOrderAmount sum per storeId
+  const orderCountMap = new Map<string, number>();
+  const openBalanceMap = new Map<string, number>();
+  const totalOrderAmountMap = new Map<string, number>();
+
+  orders.forEach(order => {
+    const storeId = order.storeId.toString();
+    // Increment order count
+    orderCountMap.set(storeId, (orderCountMap.get(storeId) || 0) + 1);
+    // Sum openBalance
+    openBalanceMap.set(storeId, (openBalanceMap.get(storeId) || 0) + (order.openBalance || 0));
+    // Sum totalOrderAmount
+    totalOrderAmountMap.set(storeId, (totalOrderAmountMap.get(storeId) || 0) + (order.orderAmount || 0));
+  });
+
+  // Add totalOrders, openBalance, and totalOrderAmount to each customer
+  const result = customers.map(customer => ({
+    ...customer,
+    totalOrders: orderCountMap.get(customer._id.toString()) || 0,
+    openBalance: openBalanceMap.get(customer._id.toString()) || 0,
+    totalOrderAmount: totalOrderAmountMap.get(customer._id.toString()) || 0,
+  }));
+
   return result;
 };
 
 const getSingleCustomerFromDB = async (id: string) => {
-  const result = await CustomerModel.findOne({ _id: id, isDeleted: false });
-  return result;
+  const result = await CustomerModel.findOne({ _id: id, isDeleted: false }).lean();
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, "Customer not found or already deleted");
+  }
+
+  // Aggregate order count, openBalance, and totalOrderAmount for this customer
+  const orderStats = await OrderModel.aggregate([
+    { $match: { storeId: new Types.ObjectId(id), isDeleted: false } },
+    {
+      $group: {
+        _id: null,
+        totalOrders: { $sum: 1 },
+        openBalance: { $sum: "$openBalance" },
+        totalOrderAmount: { $sum: "$orderAmount" },
+      },
+    },
+  ]);
+
+  return {
+    ...result,
+    totalOrders: orderStats[0]?.totalOrders || 0,
+    openBalance: orderStats[0]?.openBalance || 0,
+    totalOrderAmount: orderStats[0]?.totalOrderAmount || 0,
+  };
 };
 
 const updateCustomerIntoDB = async (id: string, payload: Partial<ICustomer>) => {
