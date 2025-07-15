@@ -3,6 +3,8 @@ Arbora Server
 
 A clean, scalable **Node.js + Express + TypeScript + Mongoose** backend for Arbora distribution company, managing_
 
+POSTMAN : https://documenter.getpostman.com/view/41576727/2sB34cqNvr
+
 -   Customer & Prospect management
 
 -   Product & Inventory management
