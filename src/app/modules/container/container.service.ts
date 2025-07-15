@@ -97,12 +97,16 @@ const getSingleContainerFromDB = async (id: string) => {
 };
 
 const updateContainerIntoDB = async (id: string, payload: Partial<IContainer>) => {
-  const updateData = {
+  const updateData : Partial<IContainer> = {
     containerNumber: payload.containerNumber,
     containerStatus: payload.containerStatus,
     deliveryDate: payload.deliveryDate,
     containerProducts: payload.containerProducts,
   };
+
+  if(payload.shippingCost) {
+    updateData.shippingCost = payload.shippingCost;
+  }
 
   const updatedContainer = await ContainerModel.findByIdAndUpdate(
     id,

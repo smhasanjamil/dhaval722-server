@@ -17,6 +17,12 @@ router.get(
 );
 
 router.get(
+  "/getChart",
+  // auth("admin"),
+  OrderControllers.getChart
+);
+
+router.get(
   "/orderInvoice/:id",
   // auth("admin"),
   OrderControllers.getOrderInvoicePdf

@@ -159,6 +159,20 @@ export const getWorstSellingProductsController = catchAsync(
   }
 );
 
+
+export const getChart = catchAsync(
+  async (req: Request, res: Response) => {
+    const data = await OrderServices.getChartData();
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Chart data fetched successfully",
+      data,
+    });
+  }
+);
+
 export const OrderControllers = {
   createOrder,
   getAllOrders,
@@ -170,4 +184,5 @@ export const OrderControllers = {
   getProductSegmentationCtrl,
   getBestSellingProductsController,
   getWorstSellingProductsController,
+  getChart
 };
