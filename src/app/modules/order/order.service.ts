@@ -356,6 +356,77 @@ const getProductSegmentation = async (topN: number = 10): Promise<{ combination:
 };
 
 
+const getChartData = async () => {
+  // Fetch all orders and customers (including deleted for historical data)
+  const orders = await OrderModel.aggregate([
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { "_id.year": 1, "_id.month": 1 },
+    },
+  ]);
+
+  const customers = await CustomerModel.aggregate([
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { "_id.year": 1, "_id.month": 1 },
+    },
+  ]);
+
+  // Initialize result object
+  const result: {
+    orders: { year: number; month: number; count: number }[];
+    customers: { year: number; month: number; count: number }[];
+  } = { orders: [], customers: [] };
+
+  // Get unique year-month combinations
+  const yearMonths = new Set<string>();
+  orders.forEach(o => yearMonths.add(`${o._id.year}-${o._id.month}`));
+  customers.forEach(c => yearMonths.add(`${c._id.year}-${c._id.month}`));
+
+  // Create a map for easier lookup
+  const orderMap = new Map(orders.map(o => [`${o._id.year}-${o._id.month}`, o.count]));
+  const customerMap = new Map(customers.map(c => [`${c._id.year}-${c._id.month}`, c.count]));
+
+  // Fill result arrays with all year-month combinations
+  Array.from(yearMonths)
+    .map(ym => {
+      const [year, month] = ym.split("-").map(Number);
+      return { year, month };
+    })
+    .sort((a, b) => a.year - b.year || a.month - b.month)
+    .forEach(({ year, month }) => {
+      result.orders.push({
+        year,
+        month,
+        count: orderMap.get(`${year}-${month}`) || 0,
+      });
+      result.customers.push({
+        year,
+        month,
+        count: customerMap.get(`${year}-${month}`) || 0,
+      });
+    });
+
+  return result;
+};
+
+
 export const OrderServices = {
   createOrderIntoDB,
   getAllOrdersFromDB,
@@ -366,5 +437,6 @@ export const OrderServices = {
   getProductsGroupedByCategory,
   getBestSellingProducts,
   getWorstSellingProducts,
-  getProductSegmentation
-};
+  getProductSegmentation,
+  getChartData
+}
