@@ -317,38 +317,33 @@ const getWorstSellingProducts = async (limit: number) => {
 
 
 const getProductSegmentation = async (topN: number = 10): Promise<{ combination: string[]; frequency: number }[]> => {
+  // Fetch all non-deleted orders
   const orders = await OrderModel.find({ isDeleted: false }).lean();
-  
+
   // Fetch all product IDs from orders
   const productIds = [...new Set(orders.flatMap(order => order.products.map(p => p.productId.toString())))];
-  
+
   // Fetch product names from ProductModel
   const products = await ProductModel.find({ _id: { $in: productIds } }).select('_id name').lean();
   const productNameMap = new Map(products.map(p => [p._id.toString(), p.name || 'Unknown Product']));
-  
+
   // Dictionary to store combination frequencies
   const combinationCounts: { [key: string]: number } = {};
 
   // Process each order
   for (const order of orders) {
-    // Extract product IDs from the order
+    // Extract and sort product IDs from the order
     const productIds = order.products.map(p => p.productId.toString()).sort();
     
-    // Generate combinations of 2 and 3 products
-    const combinations2 = getCombinations(productIds, 2);
-    const combinations3 = getCombinations(productIds, 3);
-    
-    // Combine all combinations
-    const allCombinations = [...combinations2, ...combinations3];
-    
-    // Count frequency of each combination
-    for (const combo of allCombinations) {
-      const comboKey = combo.join(",");
-      combinationCounts[comboKey] = (combinationCounts[comboKey] || 0) + 1;
-    }
+    // Skip orders with no products
+    if (productIds.length === 0) continue;
+
+    // Use the full combination as the key
+    const comboKey = productIds.join(",");
+    combinationCounts[comboKey] = (combinationCounts[comboKey] || 0) + 1;
   }
 
-  // Convert to array and sort by frequency
+  // Convert to array, map IDs to names, and sort by frequency
   const result = Object.entries(combinationCounts)
     .map(([key, frequency]) => ({
       combination: key.split(",").map(id => productNameMap.get(id) || 'Unknown Product'),
