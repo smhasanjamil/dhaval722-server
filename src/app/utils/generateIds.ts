@@ -1,3 +1,4 @@
+import { OrderModel } from "../modules/order/order.model";
 import { ProductModel } from "../modules/product/product.model";
 
 export const generateProductItemNumber = async() => {
@@ -6,3 +7,11 @@ export const generateProductItemNumber = async() => {
       return  `PRO-${product.length+1}`
 
 }
+
+export const generatePONumber = async() => {
+
+      const order = await OrderModel.find();
+      return  `ORD-${order.length+1}`
+
+}
+

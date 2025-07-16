@@ -4,7 +4,7 @@ import { IProduct } from "./product.interface";
 import { ProductService } from "./product.service";
 import sendResponse from "../../utils/sendResponse";
 import status from "http-status";
-import { generateProductItemNumber } from "../../utils/generateProductItemNumber";
+import { generateProductItemNumber } from "../../utils/generateIds";
 
 // Create Product
 const createProduct = catchAsync(async (req: Request, res: Response) => {

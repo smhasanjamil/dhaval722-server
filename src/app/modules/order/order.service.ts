@@ -6,7 +6,8 @@ import { OrderModel } from "./order.model";
 import { ProductModel } from "../product/product.model";
 import { generateSalesOrderInvoicePdf } from "../../utils/pdfCreate";
 import { CustomerModel } from "../customer/customer.model";
-import { Types } from "mongoose";
+import { generatePONumber } from "../../utils/generateIds";
+
 
 
 const createOrderIntoDB = async (payLoad: IOrder) => {
@@ -66,11 +67,13 @@ if (checkExistingStore.isDeleted == true) {
   const openBalance =
     orderAmount - (payLoad.paymentAmountReceived || 0) - discountGiven;
 
+  const PONumber = await generatePONumber();
+  
   // Prepare order data
   const orderData = {
     date: payLoad.date,
     invoiceNumber: payLoad.invoiceNumber,
-    PONumber: payLoad.PONumber,
+    PONumber: PONumber,
     storeId: payLoad.storeId,
     paymentDueDate: payLoad.paymentDueDate,
     orderAmount,

@@ -5,6 +5,7 @@ import { ICustomer } from "./customer.interface";
 import { CustomerModel } from "./customer.model";
 import { OrderModel } from "../order/order.model";
 import { Types } from "mongoose";
+import { PaymentModel } from "../payment/payment.model";
 
 const createCustomerIntoDB = async (payLoad: ICustomer) => {
   const { storePhone, storeName } = payLoad;
@@ -100,11 +101,19 @@ const getSingleCustomerFromDB = async (id: string) => {
     },
   ]);
 
+  // Fetch customer orders
+  const customerOrders = await OrderModel.find({ storeId: id, isDeleted: false }).lean();
+
+  // Fetch customer payments
+  const customerPayments = await PaymentModel.find({ storeId: id, isDeleted: false }).lean();
+
   return {
     ...result,
     totalOrders: orderStats[0]?.totalOrders || 0,
     openBalance: orderStats[0]?.openBalance || 0,
     totalOrderAmount: orderStats[0]?.totalOrderAmount || 0,
+    customerOrders,
+    customerPayments,
   };
 };
 

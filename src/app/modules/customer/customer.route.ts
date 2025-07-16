@@ -16,7 +16,7 @@ router.get("/",
 
 router.get(
   "/:id",
-  auth("admin","admin"),
+  // auth("admin","admin"),
   CustomerControllers.getSingleCustomer
 );
 

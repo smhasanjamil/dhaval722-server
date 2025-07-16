@@ -3,7 +3,7 @@ import AppError from "../../errors/AppError";
 import { IProduct } from "./product.interface";
 import { ProductModel } from "./product.model";
 import { CategoryModel } from "../category/category.model";
-import { generateProductItemNumber } from "../../utils/generateProductItemNumber";
+import { generateProductItemNumber } from "../../utils/generateIds";
 
 const createProductInDB = async (payload: IProduct | IProduct[]) => {
   // Ensure we're always working with an array internally

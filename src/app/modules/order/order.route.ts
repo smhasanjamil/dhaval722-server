@@ -54,7 +54,9 @@ router.get(
   OrderControllers.getSingleOrder
 );
 
-router.delete("/:id", auth("admin"), OrderControllers.deleteOrder);
+router.delete("/:id", 
+  // auth("admin"),
+   OrderControllers.deleteOrder);
 
 router.patch(
   "/:id",
