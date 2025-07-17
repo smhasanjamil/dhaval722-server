@@ -5,45 +5,103 @@ import { IPayment } from "./payment.interface";
 import { PaymentModel } from "./payment.model";
 import { CustomerModel } from "../customer/customer.model";
 import { OrderModel } from "../order/order.model";
+import mongoose from "mongoose";
 
 const createPaymentIntoDB = async (payLoad: IPayment) => {
-  const { storeId, forOrderId, checkNumber } = payLoad;
+  const { storeId, forOrderId, checkNumber, method, checkImage, amount } = payLoad;
 
-  // Check if checkNumber is already in use for non-deleted payments
-  const checkExistingPayment = await PaymentModel.findOne({ checkNumber, idDeleted: false });
-  if (checkExistingPayment) {
-    throw new AppError(httpStatus.BAD_REQUEST, "This check number is already in use!");
+  // Validate amount is positive
+  if (amount <= 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Amount must be positive!");
   }
 
-  // Verify storeId exists
-  const existingCustomer = await CustomerModel.findOne({ _id: storeId, isDeleted: false });
-  if (!existingCustomer) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Customer not found!");
+  // Start a MongoDB session for transaction
+  const session = await mongoose.startSession();
+
+  try {
+    // Begin transaction
+    session.startTransaction();
+
+    // Check if checkNumber is already in use for non-deleted payments
+    if (checkNumber) {
+      const checkExistingPayment = await PaymentModel.findOne({ checkNumber, isDeleted: false }).session(session);
+      if (checkExistingPayment) {
+        throw new AppError(httpStatus.BAD_REQUEST, "This check number is already in use!");
+      }
+    }
+
+    // Verify storeId exists
+    const existingCustomer = await CustomerModel.findOne({ _id: storeId, isDeleted: false }).session(session);
+    if (!existingCustomer) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Customer not found!");
+    }
+
+    // Verify forOrderId exists and fetch order details
+    const existingOrder = await OrderModel.findOne({ _id: forOrderId, isDeleted: false }).session(session);
+    if (!existingOrder) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Order not found!");
+    }
+
+    // Validate check payment requirements
+    if (method === "check" && (!checkNumber || !checkImage)) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Both check number and image must be provided for check payment!");
+    }
+
+    // Calculate total order amount and total paid amount
+    const totalOrderAmount = existingOrder.orderAmount + (existingOrder.shippingCharge || 0);
+    const totalPaidAmount = (existingOrder.paymentAmountReceived || 0) + amount;
+
+    // Determine paymentStatus
+    let paymentStatus: string;
+    if (totalPaidAmount < totalOrderAmount) {
+      paymentStatus = "partiallyPaid";
+    } else if (totalPaidAmount === totalOrderAmount) {
+      paymentStatus = "paid";
+    } else {
+      paymentStatus = "overPaid";
+    }
+
+    // Prepare payment data
+    const paymentData = {
+      storeId: payLoad.storeId,
+      forOrderId: payLoad.forOrderId,
+      method: payLoad.method,
+      date: payLoad.date,
+      amount: payLoad.amount,
+      checkNumber: payLoad.checkNumber,
+      checkImage: payLoad.checkImage,
+    };
+
+    // Create payment within transaction
+    const createdPayment = await PaymentModel.create([paymentData], { session });
+
+    // Update order's paymentAmountReceived and paymentStatus
+    const updatedOrder = await OrderModel.updateOne(
+      { _id: forOrderId, isDeleted: false },
+      {
+        $inc: { paymentAmountReceived: amount },
+        $set: { paymentStatus },
+      },
+      { session }
+    );
+
+    if (updatedOrder.matchedCount === 0) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Order not found or already deleted!");
+    }
+
+    // Commit transaction
+    await session.commitTransaction();
+    return createdPayment[0];
+  } catch (error) {
+    // Rollback transaction on error
+    await session.abortTransaction();
+    throw error instanceof AppError
+      ? error
+      : new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create payment");
+  } finally {
+    // End session
+    session.endSession();
   }
-
-  // Verify forOrderId exists
-  const existingOrder = await OrderModel.findOne({ _id: forOrderId, isDeleted: false });
-  if (!existingOrder) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Order not found!");
-  }
-
-  if(payLoad.method == "check" && (!payLoad.checkNumber || payLoad.checkImage)){
-    throw new AppError(httpStatus.BAD_REQUEST, "Both check number and image should be provided in check payment!");
-  }
-
-  const paymentData = {
-    storeId: payLoad.storeId,
-    forOrderId: payLoad.forOrderId,
-    method: payLoad.method,
-    date: payLoad.date,
-    amount: payLoad.amount,
-    checkNumber: payLoad.checkNumber,
-    checkImage: payLoad.checkImage,
-  };
-
-  const createdPayment = await PaymentModel.create(paymentData);
-
-  return createdPayment;
 };
 
 const getAllPaymentsFromDB = async () => {

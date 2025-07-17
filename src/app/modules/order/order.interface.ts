@@ -9,7 +9,7 @@ export interface IOrder {
   paymentDueDate: string;
 
   orderAmount: number; //total amount
-
+  shippingCharge: number;
   discountGiven: number; //total discounts given in products section of order
   openBalance: number; //remained amount
   profitAmount: number; //vs base products' price total
@@ -17,7 +17,7 @@ export interface IOrder {
   paymentAmountReceived: number;
 
   orderStatus: "verified" | "completed" | "cancelled";
-  paymentStatus: "paid" | "notPaid" | "partiallyPaid";
+  paymentStatus: "paid" | "notPaid" | "partiallyPaid" | "overPaid";
   // salesPerson: Types.ObjectId
 
   products: {

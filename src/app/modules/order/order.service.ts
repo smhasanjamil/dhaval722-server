@@ -6,21 +6,12 @@ import { OrderModel } from "./order.model";
 import { ProductModel } from "../product/product.model";
 import { generateSalesOrderInvoicePdf } from "../../utils/pdfCreate";
 import { CustomerModel } from "../customer/customer.model";
-import { generatePONumber } from "../../utils/generateIds";
+import { generateInvoiceNumber, generatePONumber } from "../../utils/generateIds";
 
 
 
 const createOrderIntoDB = async (payLoad: IOrder) => {
-  const { invoiceNumber, products } = payLoad;
-
-  // Check if invoice number is already in use
-  const checkExistingOrder = await OrderModel.findOne({
-    invoiceNumber,
-    isDeleted: false,
-  });
-  if (checkExistingOrder) {
-    throw new AppError(httpStatus.BAD_REQUEST, "This invoice number is already in use!");
-  }
+  const { products, date } = payLoad;
 
   // Check if store exists and is not deleted
   const checkExistingStore = await CustomerModel.findById(payLoad?.storeId);
@@ -68,11 +59,12 @@ if (checkExistingStore.isDeleted == true) {
     orderAmount - (payLoad.paymentAmountReceived || 0) - discountGiven;
 
   const PONumber = await generatePONumber();
+  const invoiceNumber = await generateInvoiceNumber(checkExistingStore.storeName,date );
   
   // Prepare order data
   const orderData = {
     date: payLoad.date,
-    invoiceNumber: payLoad.invoiceNumber,
+    invoiceNumber: invoiceNumber,
     PONumber: PONumber,
     storeId: payLoad.storeId,
     paymentDueDate: payLoad.paymentDueDate,
@@ -108,7 +100,7 @@ const generateOrderInvoicePdf = async (id: string): Promise<Buffer> => {
 };
 
 const getAllOrdersFromDB = async () => {
-  const result = await OrderModel.find({ isDeleted: false }).populate(
+  const result = await OrderModel.find({ isDeleted: false }).populate("storeId").populate(
     "products.productId"
   );
   return result;
@@ -352,7 +344,7 @@ const getProductSegmentation = async (topN: number = 10): Promise<{ combination:
     .sort((a, b) => b.frequency - a.frequency || a.combination.length - b.combination.length)
     .slice(0, topN);
 
-  return result;
+  return result.slice(0,4);
 };
 
 

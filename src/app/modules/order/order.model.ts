@@ -12,6 +12,7 @@ const orderSchema = new Schema<IOrder>(
     },
     paymentDueDate: { type: String, required: true },
     orderAmount: { type: Number, required: true },
+    shippingCharge:  { type: Number, default: 0 },
     orderStatus: {
       type: String,
       enum: ["verified", "completed", "cancelled"],
@@ -25,7 +26,7 @@ const orderSchema = new Schema<IOrder>(
     profitPercentage: { type: Number, default: 0 },
     paymentStatus: {
       type: String,
-      enum: ["paid", "notPaid", "partiallyPaid"],
+      enum: ["paid", "notPaid", "partiallyPaid", "overPaid"],
       default: "notPaid",
     },
     products: [

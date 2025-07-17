@@ -8,7 +8,7 @@ import { Types } from "mongoose";
 import { PaymentModel } from "../payment/payment.model";
 
 const createCustomerIntoDB = async (payLoad: ICustomer) => {
-  const { storePhone, storeName } = payLoad;
+  const { storeName } = payLoad;
 
   const checkExistingCustomer = await CustomerModel.findOne({ storeName, isDeleted: false });
 

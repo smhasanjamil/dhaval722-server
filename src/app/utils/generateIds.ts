@@ -15,3 +15,11 @@ export const generatePONumber = async() => {
 
 }
 
+export const generateInvoiceNumber = async (storeName: string, date: string) => {
+    const randomFourDigits = Math.floor(1000 + Math.random() * 9000);
+
+    const capitalizedStoreName = storeName.toUpperCase();
+
+    return `INV-${capitalizedStoreName}#${date.slice(0, 10)}#${randomFourDigits}`;
+};
+
