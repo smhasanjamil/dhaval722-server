@@ -4,7 +4,7 @@ import AppError from "../../errors/AppError";
 import { IOrder } from "./order.interface";
 import { OrderModel } from "./order.model";
 import { ProductModel } from "../product/product.model";
-import { generateSalesOrderInvoicePdf } from "../../utils/pdfCreate";
+import { generatePdf } from "../../utils/pdfCreate";
 import { CustomerModel } from "../customer/customer.model";
 import { generateInvoiceNumber, generatePONumber } from "../../utils/generateIds";
 
@@ -84,18 +84,122 @@ if (checkExistingStore.isDeleted == true) {
 };
 
 
+
 const generateOrderInvoicePdf = async (id: string): Promise<Buffer> => {
+  // Fetch order with populated storeId and products.productId
   const order = await OrderModel.findOne({ _id: id, isDeleted: false })
     .populate("products.productId")
     .populate("storeId")
     .lean();
 
-  console.log(order);
   if (!order) {
     throw new AppError(httpStatus.NOT_FOUND, "Order not found or deleted");
   }
 
-  const pdfBuffer = await generateSalesOrderInvoicePdf(order);
+  // Safely access customer data
+  const customer = (order.storeId as any) || {};
+
+  // Generate product rows
+  const productRows = order.products
+    .map((orderProduct, index) => {
+      const product = (orderProduct.productId as any) || {};
+      const salesPrice = product.salesPrice || 0;
+      const quantity = orderProduct.quantity || 1;
+      const discount = orderProduct.discount || 0;
+      const total = salesPrice * quantity - discount;
+      return `
+        <tr>
+          <td style="text-align:center;">${index + 1}</td>
+          <td>${product.name || "Paper Product"}</td>
+          <td style="text-align:center;">${quantity}</td>
+          <td style="text-align:right;">৳${salesPrice.toFixed(2)}</td>
+          <td style="text-align:right;">৳${total.toFixed(2)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  // Generate HTML content
+  const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; color: #333; margin: 40px; }
+          .header { text-align: center; }
+          .logo { width: 120px; margin-bottom: 10px; }
+          h2 { color: #388E3C; margin: 5px 0; }
+          h3 { color: #4CAF50; margin-top: 10px; }
+          .info-table, .product-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .info-table td { padding: 6px; vertical-align: top; }
+          .product-table th, .product-table td { border: 1px solid #ccc; padding: 8px; }
+          .product-table th { background: #E8F5E9; color: #388E3C; }
+          .totals { margin-top: 20px; width: 100%; border-collapse: collapse; }
+          .totals td { padding: 6px; text-align: right; }
+          .totals tr td:first-child { text-align: left; }
+          .footer { margin-top: 40px; font-size: 10px; text-align: center; color: #555; }
+          .highlight { color: #4CAF50; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" class="logo" />
+          <p>accounts@arbora.com</p>
+          <h3>SALES ORDER INVOICE</h3>
+        </div>
+
+        <table class="info-table">
+          <tr>
+            <td>
+              <span class="highlight">Bill To:</span><br/>
+              ${customer.storeName || "N/A"}<br/>
+              ${customer.billingAddress || "N/A"}, ${customer.billingCity || "N/A"}, ${customer.billingState || "N/A"}, ${customer.billingZipcode || "N/A"}<br/>
+              Phone: ${customer.storePhone || "N/A"}<br/>
+              Contact: ${customer.storePersonName || "N/A"}
+            </td>
+            <td>
+              <span class="highlight">Invoice Details:</span><br/>
+              Invoice No: ${order.invoiceNumber || "N/A"}<br/>
+              PO Number: ${order.PONumber || "N/A"}<br/>
+              Date: ${order.date || "N/A"}<br/>
+              Due Date: ${order.paymentDueDate || "N/A"}<br/>
+              Payment Status: ${order.paymentStatus || "N/A"}
+            </td>
+          </tr>
+        </table>
+
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${productRows}
+          </tbody>
+        </table>
+
+        <table class="totals">
+          <tr><td><strong>Subtotal:</strong></td><td>৳${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
+          <tr><td><strong>Discount:</strong></td><td>৳${(order.discountGiven || 0).toFixed(2)}</td></tr>
+          <tr><td><strong>Total:</strong></td><td>৳${(order.orderAmount || 0).toFixed(2)}</td></tr>
+          <tr><td><strong>Amount Paid:</strong></td><td>৳${(order.paymentAmountReceived || 0).toFixed(2)}</td></tr>
+          <tr><td><strong>Open Balance:</strong></td><td>৳${(order.openBalance || 0).toFixed(2)}</td></tr>
+        </table>
+
+        <div class="footer">
+          Payments due by the due date | Overdue balances incur a 2% monthly interest | No returns after 14 days | Unpaid merchandise remains property of Arbora until fully paid.<br/>
+          Thank you for choosing Arbora for your paper product needs!
+        </div>
+      </body>
+    </html>
+  `;
+
+  // Generate PDF using the utility function
+  const pdfBuffer = await generatePdf(htmlContent);
   return pdfBuffer;
 };
 
@@ -231,7 +335,7 @@ function getCombinations<T>(array: T[], size: number): T[][] {
   combine(0, []);
   return results;
 }
-// Best and worst selling product for dashboard
+// Best and wors"data": {t selling product for dashboard
 const getProductSalesStats = async () => {
   const stats = await OrderModel.aggregate([
     { $match: { isDeleted: false } },
@@ -304,8 +408,6 @@ const getWorstSellingProducts = async (limit: number) => {
   const stats = await getProductSalesStats();
   return stats.sort((a, b) => a.orderScore - b.orderScore).slice(0, limit);
 };
-
-
 
 
 const getProductSegmentation = async (topN: number = 10): Promise<{ combination: string[]; frequency: number }[]> => {
@@ -419,6 +521,141 @@ const getChartData = async () => {
 };
 
 
+
+const generateAllOrdersPdf = async (): Promise<Buffer> => {
+  // Fetch all non-deleted orders with populated storeId and products.productId
+  const orders = await OrderModel.find({ isDeleted: false })
+    .populate("products.productId")
+    .populate("storeId")
+    .lean();
+
+  if (!orders || orders.length === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, "No orders found");
+  }
+
+  // Generate HTML content for all orders
+  const orderSections = orders
+    .map((order, index) => {
+      const customer = (order.storeId as any) || {};
+
+      // Generate product rows
+      const productRows = order.products
+        .map((orderProduct, prodIndex) => {
+          const product = (orderProduct.productId as any) || {};
+          const salesPrice = product.salesPrice || 0;
+          const quantity = orderProduct.quantity || 1;
+          const discount = orderProduct.discount || 0;
+          const total = salesPrice * quantity - discount;
+          return `
+            <tr>
+              <td style="text-align:center;">${prodIndex + 1}</td>
+              <td>${product.name || "Paper Product"}</td>
+              <td style="text-align:center;">${quantity}</td>
+              <td style="text-align:right;">৳${salesPrice.toFixed(2)}</td>
+              <td style="text-align:right;">৳${total.toFixed(2)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      // Generate HTML section for each order
+      return `
+        <div class="order-section" style="page-break-after: always;">
+          <h3>Order ${index + 1}: Sales Order Invoice</h3>
+          <table class="info-table">
+            <tr>
+              <td>
+                <span class="highlight">Bill To:</span><br/>
+                ${customer.storeName || "N/A"}<br/>
+                ${customer.billingAddress || "N/A"}, ${customer.billingCity || "N/A"}, ${customer.billingState || "N/A"}, ${customer.billingZipcode || "N/A"}<br/>
+                Phone: ${customer.storePhone || "N/A"}<br/>
+                Contact: ${customer.storePersonName || "N/A"}
+              </td>
+              <td>
+                <span class="highlight">Invoice Details:</span><br/>
+                Invoice No: ${order.invoiceNumber || "N/A"}<br/>
+                PO Number: ${order.PONumber || "N/A"}<br/>
+                Date: ${order.date || "N/A"}<br/>
+                Due Date: ${order.paymentDueDate || "N/A"}<br/>
+                Payment Status: ${order.paymentStatus || "N/A"}<br/>
+                Order Status: ${order.orderStatus || "N/A"}
+              </td>
+            </tr>
+          </table>
+
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productRows}
+            </tbody>
+          </table>
+
+          <table class="totals">
+            <tr><td><strong>Subtotal:</strong></td><td>৳${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
+            <tr><td><strong>Discount:</strong></td><td>৳${(order.discountGiven || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Shipping Charge:</strong></td><td>৳${(order.shippingCharge || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Total:</strong></td><td>৳${(order.orderAmount || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Amount Paid:</strong></td><td>৳${(order.paymentAmountReceived || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Open Balance:</strong></td><td>৳${(order.openBalance || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Profit Amount:</strong></td><td>৳${(order.profitAmount || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Profit Percentage:</strong></td><td>${(order.profitPercentage || 0).toFixed(2)}%</td></tr>
+          </table>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Generate full HTML content
+  const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; color: #333; margin: 40px; }
+          .header { text-align: center; }
+          .logo { width: 120px; margin-bottom: 10px; }
+          h2 { color: #388E3C; margin: 5px 0; }
+          h3 { color: #4CAF50; margin-top: 10px; }
+          .info-table, .product-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .info-table td { padding: 6px; vertical-align: top; }
+          .product-table th, .product-table td { border: 1px solid #ccc; padding: 8px; }
+          .product-table th { background: #E8F5E9; color: #388E3C; }
+          .totals { margin-top: 20px; width: 100%; border-collapse: collapse; }
+          .totals td { padding: 6px; text-align: right; }
+          .totals tr td:first-child { text-align: left; }
+          .footer { margin-top: 40px; font-size: 10px; text-align: center; color: #555; }
+          .highlight { color: #4CAF50; font-weight: bold; }
+          .order-section { margin-bottom: 40px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" class="logo" />
+          <h2>Arbora All Orders Report</h2>
+          <p>accounts@arbora.com</p>
+        </div>
+        ${orderSections}
+        <div class="footer">
+          Generated on ${new Date().toLocaleDateString()} | Arbora Paper Products<br/>
+          Thank you for choosing Arbora for your paper product needs!
+        </div>
+      </body>
+    </html>
+  `;
+
+  // Generate PDF using the utility function
+  const pdfBuffer = await generatePdf(htmlContent);
+  return pdfBuffer;
+};
+
+
 export const OrderServices = {
   createOrderIntoDB,
   getAllOrdersFromDB,
@@ -430,5 +667,6 @@ export const OrderServices = {
   getBestSellingProducts,
   getWorstSellingProducts,
   getProductSegmentation,
-  getChartData
+  getChartData,
+  generateAllOrdersPdf
 }

@@ -11,7 +11,13 @@ router.post(
 );
 
 router.get(
-  "/",
+  "/allOrdersPdf",
+  // auth("admin"),
+  OrderControllers.getAllOrdersPDF
+);
+
+router.get(
+  "/ordersPdf",
   // auth("admin"),
   OrderControllers.getAllOrders
 );

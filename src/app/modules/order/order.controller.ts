@@ -176,6 +176,18 @@ export const getChart = catchAsync(
   }
 );
 
+
+const getAllOrdersPDF =  catchAsync(async (req: Request, res: Response) => {
+    const pdfBuffer = await OrderServices.generateAllOrdersPdf();
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=all-orders-report.pdf",
+      "Content-Length": pdfBuffer.length,
+    });
+    res.send(pdfBuffer);
+
+});
+
 export const OrderControllers = {
   createOrder,
   getAllOrders,
@@ -187,6 +199,7 @@ export const OrderControllers = {
   getProductSegmentationCtrl,
   getBestSellingProductsController,
   getWorstSellingProductsController,
-  getChart
+  getChart,
+  getAllOrdersPDF
 };
   

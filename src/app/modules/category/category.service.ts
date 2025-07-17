@@ -3,6 +3,7 @@ import AppError from "../../errors/AppError";
 import { ICategory } from "./category.interface";
 import { CategoryModel } from "./category.model";
 import { ProductModel } from "../product/product.model";
+import mongoose from "mongoose";
 
 // Insert category into database
 const createCategoryIntoDB = async (payload: ICategory) => {
@@ -53,23 +54,46 @@ const updateCategoryInDB = async (
 
 // Delete a category from the database
 const deleteCategoryFromDB = async (id: string) => {
-  // Check if category exists
-  const category = await CategoryModel.findById(id);
-  if (!category) {
-    throw new AppError(status.NOT_FOUND, "Category not found");
-  }
+  // Start a MongoDB session for transaction
+  const session = await mongoose.startSession();
 
-  // Check if any product is using this category
-  const relatedProducts = await ProductModel.findOne({ categoryId: id });
-  if (relatedProducts) {
-    throw new AppError(
-      status.CONFLICT,
-      "Cannot delete category: products exist in this category"
+  try {
+    // Begin transaction
+    session.startTransaction();
+
+    // Check if category exists
+    const category = await CategoryModel.findById(id).session(session);
+    if (!category) {
+      throw new AppError(status.NOT_FOUND, "Category not found");
+    }
+
+    // Soft delete the category
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(
+      id,
+      { $set: { isDeleted: true } },
+      { new: true, session }
     );
-  }
 
-  const deleted = await CategoryModel.findByIdAndDelete(id);
-  return deleted;
+    // Soft delete related products
+    const updatedProducts = await ProductModel.updateMany(
+      { categoryId: id, isDeleted: false },
+      { $set: { isDeleted: true } },
+      { session }
+    );
+
+    // Commit transaction
+    await session.commitTransaction();
+    return updatedCategory;
+  } catch (error) {
+    // Rollback transaction on error
+    await session.abortTransaction();
+    throw error instanceof AppError
+      ? error
+      : new AppError(status.INTERNAL_SERVER_ERROR, "Failed to delete category");
+  } finally {
+    // End session
+    session.endSession();
+  }
 };
 
 export const CategoryService = {
