@@ -11,7 +11,7 @@ router.post(
 );
 
 router.get("/", 
-  auth("admin"), 
+  // auth("admin"), 
   CustomerControllers.getAllCustomers);
 
 router.get(

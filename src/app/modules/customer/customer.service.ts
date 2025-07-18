@@ -49,6 +49,7 @@ const createCustomerIntoDB = async (payLoad: ICustomer) => {
 
 
 
+
 const getAllCustomersFromDB = async () => {
   // Fetch all non-deleted customers
   const customers = await CustomerModel.find({ isDeleted: false }).lean();
@@ -56,11 +57,15 @@ const getAllCustomersFromDB = async () => {
   // Fetch all non-deleted orders
   const orders = await OrderModel.find({ isDeleted: false }).lean();
 
+  // Fetch all non-deleted payments
+  const payments = await PaymentModel.find({ isDeleted: false }).lean();
+
   // Create maps for order count, openBalance sum, and totalOrderAmount sum per storeId
   const orderCountMap = new Map<string, number>();
   const openBalanceMap = new Map<string, number>();
   const totalOrderAmountMap = new Map<string, number>();
 
+  // Aggregate order stats
   orders.forEach(order => {
     const storeId = order.storeId.toString();
     // Increment order count
@@ -71,13 +76,18 @@ const getAllCustomersFromDB = async () => {
     totalOrderAmountMap.set(storeId, (totalOrderAmountMap.get(storeId) || 0) + (order.orderAmount || 0));
   });
 
-  // Add totalOrders, openBalance, and totalOrderAmount to each customer
-  const result = customers.map(customer => ({
-    ...customer,
-    totalOrders: orderCountMap.get(customer._id.toString()) || 0,
-    openBalance: openBalanceMap.get(customer._id.toString()) || 0,
-    totalOrderAmount: totalOrderAmountMap.get(customer._id.toString()) || 0,
-  }));
+  // Add totalOrders, openBalance, totalOrderAmount, customerOrders, and customerPayments to each customer
+  const result = customers.map(customer => {
+    const customerId = customer._id.toString();
+    return {
+      ...customer,
+      totalOrders: orderCountMap.get(customerId) || 0,
+      openBalance: openBalanceMap.get(customerId) || 0,
+      totalOrderAmount: totalOrderAmountMap.get(customerId) || 0,
+      customerOrders: orders.filter(order => order.storeId.toString() === customerId),
+      customerPayments: payments.filter(payment => payment.storeId.toString() === customerId),
+    };
+  });
 
   return result;
 };
@@ -175,3 +185,4 @@ export const CustomerServices = {
   updateCustomerIntoDB,
   deleteCustomerIntoDB,
 };
+
