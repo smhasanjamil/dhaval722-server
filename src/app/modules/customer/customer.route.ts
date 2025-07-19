@@ -29,4 +29,18 @@ router.patch(
 );
 
 
+router.post(
+  "/:id/send-email-for-not-paid-orders",
+  // auth("admin"),
+  CustomerControllers.sendEmailForNotPaidOrders
+);
+
+
+router.get(
+  "/:id/generate-pallet",
+  // auth("admin"),
+  CustomerControllers.generatePallet
+);
+
+
 export const CustomerRoutes = router;

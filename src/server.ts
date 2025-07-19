@@ -2,7 +2,7 @@ import { Server } from 'http';
 import mongoose from 'mongoose';
 import app from './app';
 import config from '../src/app/config/index';
-import { startAlertScheduler } from './app/modules/allerts/allert.util';
+
 
 
 let server: Server | null = null;

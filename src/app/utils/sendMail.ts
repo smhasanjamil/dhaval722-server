@@ -92,3 +92,60 @@ export const sendProspectDutyEmailToSalesPerson = async (
   await sendMail({ to: salesEmail, subject, text, html });
 };
 
+
+
+export const sendOpenBalanceEmail = async ({ storePersonEmail, unpaidOrders }: { storePersonEmail: string; unpaidOrders: any[] }) => {
+  const subject = "Friendly Reminder: Outstanding Balance on Your Orders";
+  const totalOpenBalance = unpaidOrders.reduce((sum, order) => sum + order.openBalance, 0).toFixed(2);
+
+  const orderDetails = unpaidOrders
+    .map(order => `
+      <li>
+        Invoice #${order.invoiceNumber} - Open Balance: $${order.openBalance.toFixed(2)} (Due: ${order.paymentDueDate})
+      </li>
+    `)
+    .join("");
+
+  const text = `Dear ${storePersonEmail.split("@")[0]},
+
+We kindly remind you of an outstanding balance of $${totalOpenBalance} on your orders. Please find details below:
+
+${unpaidOrders.map(order => `Invoice #${order.invoiceNumber}: $${order.openBalance.toFixed(2)} (Due: ${order.paymentDueDate})`).join("\n")}
+
+Please settle the balance at your earliest convenience. Feel free to contact us at accounts@arbora.com for assistance.
+
+Best regards,
+Arbora Team`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" width="120"/>
+      </div>
+      <h2 style="color: #4CAF50; text-align: center;">Friendly Reminder 📩</h2>
+      <p style="font-size: 16px; color: #333;">
+        Dear ${storePersonEmail.split("@")[0]},
+      </p>
+      <p style="font-size: 16px; color: #333;">
+        We hope this message finds you well. We would like to kindly remind you of an outstanding balance of <b>$${totalOpenBalance}</b> on your orders with Arbora.
+      </p>
+      <p style="font-size: 16px; color: #333;">
+        Please review the details below:
+      </p>
+      <ul style="font-size: 16px; color: #333; padding-left: 20px;">
+        ${orderDetails}
+      </ul>
+      <p style="font-size: 16px; color: #333;">
+        We kindly request you to settle this balance at your earliest convenience. Should you have any questions or need assistance, please don’t hesitate to reach out to us at <a href="mailto:accounts@arbora.com">accounts@arbora.com</a>.
+      </p>
+      <p style="font-size: 14px; color: #777; text-align: center; margin-top: 30px;">
+        Thank you for your prompt attention to this matter.
+      </p>
+      <p style="font-size: 14px; color: #777; text-align: center;">
+        - Arbora Team
+      </p>
+    </div>
+  `;
+
+  await sendMail({ to: storePersonEmail, subject, text, html });
+};

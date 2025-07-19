@@ -34,6 +34,12 @@ router.get(
   OrderControllers.getOrderInvoicePdf
 );
 
+router.get(
+  "/deliverySheet/:id",
+  // auth("admin"),
+  OrderControllers.getDeliverySheetPdf
+);
+
 // Get Products Grouped By Category
 router.get(
   "/bulk-order-excel-empty",

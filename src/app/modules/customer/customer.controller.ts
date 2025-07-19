@@ -86,10 +86,35 @@ const deleteCustomer = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const sendEmailForNotPaidOrders = catchAsync(async (req: Request, res: Response) => {
+  const { id: customerId } = req.params;
+
+  const result = await CustomerServices.sendEmailForNotPaidOrders(customerId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Email sent successfully for unpaid orders",
+    data: result,
+  });
+});
+
+const generatePallet = catchAsync(async (req: Request, res: Response) => {
+  const { id: customerId } = req.params;
+
+  const pdfBuffer = await CustomerServices.generatePallet(customerId);
+
+  res.send(pdfBuffer);
+});
+
+
+
 export const CustomerControllers = {
   createCustomer,
   getAllCustomers,
   getSingleCustomer,
   updateCustomer,
   deleteCustomer,
+  sendEmailForNotPaidOrders,
+  generatePallet
 };
