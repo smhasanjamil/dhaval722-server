@@ -16,6 +16,8 @@ export interface IOrder {
   profitPercentage: number;
   paymentAmountReceived: number;
 
+  shippingDate?: string;
+
   orderStatus: "verified" | "completed" | "cancelled";
   paymentStatus: "paid" | "notPaid" | "partiallyPaid" | "overPaid";
   // salesPerson: Types.ObjectId

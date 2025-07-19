@@ -31,6 +31,18 @@ const getOrderInvoicePdf = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).send(pdfBuffer);
 });
 
+const getDeliverySheetPdf = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const pdfBuffer = await OrderServices.generateDeliverySheetPdf(id);
+
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": "inline; filename=delivery-sheet.pdf",
+  });
+
+  res.status(httpStatus.OK).send(pdfBuffer);
+});
+
 const getAllOrders = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderServices.getAllOrdersFromDB();
 
@@ -200,6 +212,7 @@ export const OrderControllers = {
   getBestSellingProductsController,
   getWorstSellingProductsController,
   getChart,
-  getAllOrdersPDF
+  getAllOrdersPDF,
+  getDeliverySheetPdf
 };
   

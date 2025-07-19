@@ -11,6 +11,7 @@ const orderSchema = new Schema<IOrder>(
       ref: "Customer",
     },
     paymentDueDate: { type: String, required: true },
+    shippingDate: { type: String},
     orderAmount: { type: Number, required: true },
     shippingCharge:  { type: Number, default: 0 },
     orderStatus: {
