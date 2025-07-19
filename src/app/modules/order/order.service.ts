@@ -85,10 +85,14 @@ if (checkExistingStore.isDeleted == true) {
 
 
 
+
 const generateOrderInvoicePdf = async (id: string): Promise<Buffer> => {
   // Fetch order with populated storeId and products.productId
   const order = await OrderModel.findOne({ _id: id, isDeleted: false })
-    .populate("products.productId")
+    .populate({
+      path: "products.productId",
+      populate: { path: "categoryId" },
+    })
     .populate("storeId")
     .lean();
 
@@ -103,96 +107,297 @@ const generateOrderInvoicePdf = async (id: string): Promise<Buffer> => {
   const productRows = order.products
     .map((orderProduct, index) => {
       const product = (orderProduct.productId as any) || {};
+      const category = product.categoryId.name || "N/A";
+      const productNumber = product.productNumber || `PROD-${index + 1}`;
+      const productName = product.name || "Paper Product";
+      const packSize = product.packetSize || "1";
+      const description = `${productName} X ${packSize}`;
       const salesPrice = product.salesPrice || 0;
       const quantity = orderProduct.quantity || 1;
       const discount = orderProduct.discount || 0;
       const total = salesPrice * quantity - discount;
       return `
-        <tr>
-          <td style="text-align:center;">${index + 1}</td>
-          <td>${product.name || "Paper Product"}</td>
-          <td style="text-align:center;">${quantity}</td>
-          <td style="text-align:right;">৳${salesPrice.toFixed(2)}</td>
-          <td style="text-align:right;">৳${total.toFixed(2)}</td>
+        <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9f9f9'};">
+          <td style="text-align:center; padding: 8px; border: 1px solid #ddd;">${index + 1}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${category}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${productNumber}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${description}</td>
+          <td style="text-align:center; padding: 8px; border: 1px solid #ddd;">${quantity}</td>
+          <td style="text-align:right; padding: 8px; border: 1px solid #ddd;">$${salesPrice.toFixed(2)}</td>
+          <td style="text-align:right; padding: 8px; border: 1px solid #ddd;">$${total.toFixed(2)}</td>
         </tr>
       `;
     })
     .join("");
 
-  // Generate HTML content
+  // Generate HTML content with updated design
   const htmlContent = `
     <html>
       <head>
         <style>
-          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; color: #333; margin: 40px; }
-          .header { text-align: center; }
-          .logo { width: 120px; margin-bottom: 10px; }
-          h2 { color: #388E3C; margin: 5px 0; }
-          h3 { color: #4CAF50; margin-top: 10px; }
-          .info-table, .product-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          .info-table td { padding: 6px; vertical-align: top; }
-          .product-table th, .product-table td { border: 1px solid #ccc; padding: 8px; }
-          .product-table th { background: #E8F5E9; color: #388E3C; }
-          .totals { margin-top: 20px; width: 100%; border-collapse: collapse; }
-          .totals td { padding: 6px; text-align: right; }
-          .totals tr td:first-child { text-align: left; }
-          .footer { margin-top: 40px; font-size: 10px; text-align: center; color: #555; }
-          .highlight { color: #4CAF50; font-weight: bold; }
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #333; margin: 0; padding: 10px; background-color: #fff; }
+          .container { max-width: 800px; margin: 0 auto; }
+          .header { text-align: center;height:100px;display: flex; justify-content: space-between; align-items: center; width: 100%; }
+          .logo { width: 120px; margin-right: 10px; }
+          .company-info { color: #555; font-size: 11px; }
+          .contact-info { text-align: left; margin: 0 10px; }
+          .invoice-title { background-color: #388E3C; color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: bold; margin-left: 10px; margin-bottom: 55px; }
+          .info-section { display: flex; justify-content: space-between; gap: 4px; margin: 20px 0; }
+          .info-block { width: 48%; background-color: #f5f5f5; padding: 15px; border: 1px solid #ddd; border-radius: 4px; line-height: 1.2; } /* Reduced line height */
+          .info-block .label { font-weight: bold; color: #388E3C; }
+          .product-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px}
+          .product-table th { background-color: #388E3C; color: #fff; padding: 5px;font-size:12px; text-align: center; border: 1px solid #ddd; }
+          .product-table td { padding: 8px; border: 1px solid #ddd;font-size: 13px }
+          .totals-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 20px 0; }
+          .totals-table td { padding: 8px; border: 1px solid #ddd; }
+          .totals-table .total-row { background-color: #E8F5E9; }
+          .totals-table .label { font-weight: bold; text-align: left; }
+          .totals-table .value { text-align: right; }
+          .footer { text-align: center; font-size: 12px; color: #777; padding-top: 20px; border-top: 1px solid #ddd; }
+          .invoice-details-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 4px; }
+          .invoice-details-table td { padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; }
+          .customer-table {margin-top: 20px; }
         </style>
       </head>
       <body>
-        <div class="header">
-          <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" class="logo" />
-          <p>accounts@arbora.com</p>
-          <h3>SALES ORDER INVOICE</h3>
-        </div>
+        <div class="container">
+          <div class="header">
+            <div>
+              <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" class="logo" />
+            
+              <div class="invoice-title">Order Invoice</div>
+            </div>
 
-        <table class="info-table">
-          <tr>
-            <td>
-              <span class="highlight">Bill To:</span><br/>
-              ${customer.storeName || "N/A"}<br/>
-              ${customer.billingAddress || "N/A"}, ${customer.billingCity || "N/A"}, ${customer.billingState || "N/A"}, ${customer.billingZipcode || "N/A"}<br/>
-              Phone: ${customer.storePhone || "N/A"}<br/>
-              Contact: ${customer.storePersonName || "N/A"}
-            </td>
-            <td>
-              <span class="highlight">Invoice Details:</span><br/>
-              Invoice No: ${order.invoiceNumber || "N/A"}<br/>
-              PO Number: ${order.PONumber || "N/A"}<br/>
-              Date: ${order.date || "N/A"}<br/>
-              Due Date: ${order.paymentDueDate || "N/A"}<br/>
-              Payment Status: ${order.paymentStatus || "N/A"}
-            </td>
-          </tr>
-        </table>
+             <div class="contact-info">
+              <p class="company-info">123 Paper Lane, Dhaka, Bangladesh</p>
+              <p class="company-info">Phone: +880-1234-567890</p>
+              <p class="company-info">Email: accounts@arbora.com</p>
+              <p class="company-info">Contact: John Doe</p>
+            </div>
+          </div>
 
-        <table class="product-table">
-          <thead>
+          <table class="customer-table invoice-details-table">
             <tr>
-              <th>#</th>
-              <th>Product</th>
-              <th>Qty</th>
-              <th>Unit Price</th>
-              <th>Total</th>
+              <td><b>Store</b></td>
+              <td><b>Email</b></td>
+              <td><b>Phone</b></td>
+              <td><b>Shipping Date</b></td>
             </tr>
-          </thead>
-          <tbody>
-            ${productRows}
-          </tbody>
-        </table>
+            <tr>
+              <td>${customer.storeName || "N/A"}</td>
+              <td>${customer.storePersonEmail || "N/A"}</td>
+              <td>${customer.storePhone || "N/A"}</td>
+              <td>${order.shippingDate || "N/A"}</td>
+            </tr>
+          </table>
+          <div class="info-section">
+            <div class="info-block">
+              <div class="label">Bill To</div>
+              <p>${customer.billingAddress || "N/A"}, City: ${customer.billingCity || "N/A"}, State: ${customer.billingState || "N/A"}, Zip: ${customer.billingZipcode || "N/A"}</p>
+            </div>
+            <div class="info-block">
+              <div class="label">Ship To</div>
+              <p>${customer.billingAddress || "N/A"}, City:  ${customer.billingCity || "N/A"}, State:  ${customer.billingState || "N/A"}, Zip:  ${customer.billingZipcode || "N/A"}</p>
+            </div>
+          </div>
 
-        <table class="totals">
-          <tr><td><strong>Subtotal:</strong></td><td>৳${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
-          <tr><td><strong>Discount:</strong></td><td>৳${(order.discountGiven || 0).toFixed(2)}</td></tr>
-          <tr><td><strong>Total:</strong></td><td>৳${(order.orderAmount || 0).toFixed(2)}</td></tr>
-          <tr><td><strong>Amount Paid:</strong></td><td>৳${(order.paymentAmountReceived || 0).toFixed(2)}</td></tr>
-          <tr><td><strong>Open Balance:</strong></td><td>৳${(order.openBalance || 0).toFixed(2)}</td></tr>
-        </table>
+          <table class="invoice-details-table">
+            <tr>
+              <td>Invoice No</td>
+              <td>PO Number</td>
+              <td>Order Date</td>
+              <td>Due Date</td>
+              <td>Payment Status</td>
+            </tr>
+            <tr>
+              <td><b>${order.invoiceNumber || "N/A"}</b></td>
+              <td><b>${order.PONumber || "N/A"}</b></td>
+              <td><b>${order.date || "N/A"}</b></td>
+              <td><b>${order.paymentDueDate || "N/A"}</b></td>
+              <td><b>${order.paymentStatus || "N/A"}</b></td>
+            </tr>
+          </table>
 
-        <div class="footer">
-          Payments due by the due date | Overdue balances incur a 2% monthly interest | No returns after 14 days | Unpaid merchandise remains property of Arbora until fully paid.<br/>
-          Thank you for choosing Arbora for your paper product needs!
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Category</th>
+                <th>Product No.</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productRows}
+            </tbody>
+          </table>
+
+          <table class="totals-table">
+            <tr><td class="label">Subtotal:</td><td class="value">$${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
+            <tr><td class="label">Discount:</td><td class="value">$${(order.discountGiven || "0")}</td></tr>
+            <tr><td class="label">Total:</td><td class="value">$${(order.orderAmount || 0).toFixed(2)}</td></tr>
+            <tr><td class="label">Shipping Charge:</td><td class="value">$${(order.shippingCharge || 0)}</td></tr>
+            <tr><td class="label">Total Payable:</td><td class="value">$${(Number(order.shippingCharge) + order.orderAmount || 0)}</td></tr>
+            <tr><td class="label">Paid:</td><td class="value">$${(order.paymentAmountReceived || 0)}</td></tr>
+            <tr><td class="label">Remaining Payable:</td><td class="value">$${(order.openBalance || 0)}</td></tr>
+          </table>
+
+          <div class="footer">
+            Payments due by the due date | Overdue balances incur a 2% monthly interest | No returns after 14 days | Unpaid merchandise remains property of Arbora until fully paid.<br/>
+            Thank you for choosing Arbora for your paper product needs!
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  // Generate PDF using the utility function
+  const pdfBuffer = await generatePdf(htmlContent);
+  return pdfBuffer;
+};
+
+const generateDeliverySheetPdf = async (id: string): Promise<Buffer> => {
+  // Fetch order with populated storeId and products.productId
+  const order = await OrderModel.findOne({ _id: id, isDeleted: false })
+    .populate({
+      path: "products.productId",
+      populate: { path: "categoryId" },
+    })
+    .populate("storeId")
+    .lean();
+
+  if (!order) {
+    throw new AppError(httpStatus.NOT_FOUND, "Order not found or deleted");
+  }
+
+  // Safely access customer data
+  const customer = (order.storeId as any) || {};
+
+  // Generate product rows
+  const productRows = order.products
+    .map((orderProduct, index) => {
+      const product = (orderProduct.productId as any) || {};
+      const category = product.categoryId.name || "N/A";
+      const productNumber = product.productNumber || `PROD-${index + 1}`;
+      const productName = product.name || "Paper Product";
+      const packSize = product.packetSize || "1";
+      const description = `${productName} X ${packSize}`;
+      const quantity = orderProduct.quantity || 1;
+      return `
+        <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9f9f9'};">
+          <td style="text-align:center; padding: 8px; border: 1px solid #ddd;">${index + 1}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${category}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${productNumber}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${description}</td>
+          <td style="text-align:center; padding: 8px; border: 1px solid #ddd;">${quantity}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;"></td> <!-- Verification column -->
+        </tr>
+      `;
+    })
+    .join("");
+
+  // Generate HTML content for Delivery Sheet
+  const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #333; margin: 0; padding: 10px; background-color: #fff; }
+          .container { max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; height: 100px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+          .logo { width: 120px; margin-right: 10px; }
+          .company-info { color: #555; font-size: 11px; }
+          .contact-info { text-align: left; margin: 0 10px; }
+          .delivery-title { background-color: #388E3C; color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: bold; margin-left: 10px; margin-bottom: 55px; }
+          .info-section { display: flex; justify-content: space-between; gap: 4px; margin: 20px 0; }
+          .info-block { width: 48%; background-color: #f5f5f5; padding: 15px; border: 1px solid #ddd; border-radius: 4px; line-height: 1.2; }
+          .info-block .label { font-weight: bold; color: #388E3C; }
+          .product-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+          .product-table th { background-color: #388E3C; color: #fff; padding: 5px; font-size: 12px; text-align: center; border: 1px solid #ddd; }
+          .product-table td { padding: 8px; border: 1px solid #ddd; font-size: 13px; }
+          .footer { text-align: center; font-size: 12px; color: #777; padding-top: 20px; border-top: 1px solid #ddd; }
+          .customer-table { margin-top: 40px; }
+          .customer-table, .invoice-details-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 4px; }
+          .customer-table td, .invoice-details-table td { padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div>
+              <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" class="logo" />
+              <div class="delivery-title">Delivery Sheet</div>
+            </div>
+            <div class="contact-info">
+              <p class="company-info">123 Paper Lane, Dhaka, Bangladesh</p>
+              <p class="company-info">Phone: +880-1234-567890</p>
+              <p class="company-info">Email: accounts@arbora.com</p>
+              <p class="company-info">Contact: John Doe</p>
+            </div>
+          </div>
+
+          <table class="customer-table invoice-details-table">
+            <tr>
+              <td><b>Store</b></td>
+              <td><b>Email</b></td>
+              <td><b>Phone</b></td>
+              <td><b>Shipping Date</b></td>
+            </tr>
+            <tr>
+              <td>${customer.storeName || "N/A"}</td>
+              <td>${customer.storePersonEmail || "N/A"}</td>
+              <td>${customer.storePhone || "N/A"}</td>
+              <td>${order.shippingDate || "N/A"}</td>
+            </tr>
+          </table>
+          <div class="info-section">
+            <div class="info-block">
+              <div class="label">Bill To</div>
+              <p>${customer.billingAddress || "N/A"}, City: ${customer.billingCity || "N/A"}, State: ${customer.billingState || "N/A"}, Zip: ${customer.billingZipcode || "N/A"}</p>
+            </div>
+            <div class="info-block">
+              <div class="label">Ship To</div>
+              <p>${customer.billingAddress || "N/A"}, City: ${customer.billingCity || "N/A"}, State: ${customer.billingState || "N/A"}, Zip: ${customer.billingZipcode || "N/A"}</p>
+            </div>
+          </div>
+
+          <table class="invoice-details-table">
+            <tr>
+              <td>Invoice No</td>
+              <td>PO Number</td>
+              <td>Order Date</td>
+              <td>Due Date</td>
+            </tr>
+            <tr>
+              <td><b>${order.invoiceNumber || "N/A"}</b></td>
+              <td><b>${order.PONumber || "N/A"}</b></td>
+              <td><b>${order.date || "N/A"}</b></td>
+              <td><b>${order.paymentDueDate || "N/A"}</b></td>
+            </tr>
+          </table>
+
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Category</th>
+                <th>Product No.</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Verification</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productRows}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            Please verify the delivery contents upon receipt | Contact us at accounts@arbora.com for any discrepancies.<br/>
+            Thank you for your business with Arbora!
+          </div>
         </div>
       </body>
     </html>
@@ -212,12 +417,16 @@ const getAllOrdersFromDB = async () => {
 
 const getSingleOrderFromDB = async (id: string) => {
   const result = await OrderModel.findOne({ _id: id, isDeleted: false })
-    .populate("products.productId")
+    .populate({
+      path: "products.productId",
+      populate: { path: "categoryId" }, // 👈 populates categoryId inside productId
+    })
     .populate("storeId")
     .lean();
 
   return result;
 };
+
 
 const updateOrderIntoDB = async (id: string, payload: Partial<IOrder>) => {
   const checkExistingStore = await CustomerModel.findOne({
@@ -551,8 +760,8 @@ const generateAllOrdersPdf = async (): Promise<Buffer> => {
               <td style="text-align:center;">${prodIndex + 1}</td>
               <td>${product.name || "Paper Product"}</td>
               <td style="text-align:center;">${quantity}</td>
-              <td style="text-align:right;">৳${salesPrice.toFixed(2)}</td>
-              <td style="text-align:right;">৳${total.toFixed(2)}</td>
+              <td style="text-align:right;">${salesPrice.toFixed(2)}</td>
+              <td style="text-align:right;">${total.toFixed(2)}</td>
             </tr>
           `;
         })
@@ -599,13 +808,13 @@ const generateAllOrdersPdf = async (): Promise<Buffer> => {
           </table>
 
           <table class="totals">
-            <tr><td><strong>Subtotal:</strong></td><td>৳${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
-            <tr><td><strong>Discount:</strong></td><td>৳${(order.discountGiven || 0).toFixed(2)}</td></tr>
-            <tr><td><strong>Shipping Charge:</strong></td><td>৳${(order.shippingCharge || 0).toFixed(2)}</td></tr>
-            <tr><td><strong>Total:</strong></td><td>৳${(order.orderAmount || 0).toFixed(2)}</td></tr>
-            <tr><td><strong>Amount Paid:</strong></td><td>৳${(order.paymentAmountReceived || 0).toFixed(2)}</td></tr>
-            <tr><td><strong>Open Balance:</strong></td><td>৳${(order.openBalance || 0).toFixed(2)}</td></tr>
-            <tr><td><strong>Profit Amount:</strong></td><td>৳${(order.profitAmount || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Subtotal:</strong></td><td>${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
+            <tr><td><strong>Discount:</strong></td><td>${(order.discountGiven || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Shipping Charge:</strong></td><td>${(order.shippingCharge || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Total:</strong></td><td>${(order.orderAmount || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Amount Paid:</strong></td><td>${(order.paymentAmountReceived || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Open Balance:</strong></td><td>${(order.openBalance || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Profit Amount:</strong></td><td>${(order.profitAmount || 0).toFixed(2)}</td></tr>
             <tr><td><strong>Profit Percentage:</strong></td><td>${(order.profitPercentage || 0).toFixed(2)}%</td></tr>
           </table>
         </div>
@@ -668,5 +877,6 @@ export const OrderServices = {
   getWorstSellingProducts,
   getProductSegmentation,
   getChartData,
-  generateAllOrdersPdf
+  generateAllOrdersPdf,
+  generateDeliverySheetPdf
 }

@@ -6,6 +6,8 @@ import { CustomerModel } from "./customer.model";
 import { OrderModel } from "../order/order.model";
 import { Types } from "mongoose";
 import { PaymentModel } from "../payment/payment.model";
+import { sendOpenBalanceEmail } from "../../utils/sendMail";
+import { generatePdf } from "../../utils/pdfCreate";
 
 const createCustomerIntoDB = async (payLoad: ICustomer) => {
   const { storeName } = payLoad;
@@ -90,6 +92,29 @@ const getAllCustomersFromDB = async () => {
   });
 
   return result;
+};
+
+const sendEmailForNotPaidOrders = async (customerId: string) => {
+  // Fetch customer data
+  const customer = await getSingleCustomerFromDB(customerId);
+
+  // Filter orders with open balance greater than 0
+  const unpaidOrders = customer.customerOrders.filter(order => order.openBalance > 0);
+
+  if (unpaidOrders.length === 0) {
+    return { storePersonEmail: customer.storePersonEmail, unpaidOrders: [] };
+  }
+
+  // Prepare data for email
+  const emailData = {
+    storePersonEmail: customer.storePersonEmail,
+    unpaidOrders,
+  };
+
+  // Send email
+  await sendOpenBalanceEmail(emailData);
+
+  return emailData;
 };
 
 const getSingleCustomerFromDB = async (id: string) => {
@@ -178,11 +203,67 @@ const deleteCustomerIntoDB = async (id: string) => {
   return result;
 };
 
+const generatePallet = async (customerId: string): Promise<Buffer> => {
+  // Fetch customer data
+  const customer = await getSingleCustomerFromDB(customerId);
+
+  // Generate HTML content for the pallet PDF
+  const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #333; margin: 0; padding: 10px; background-color: #fff; }
+          .container { max-width: 800px; margin: 0 auto; text-align: center; }
+          .header { height: 100px; display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 20px; }
+          .customer-info { text-align: center; margin-bottom: 20px; }
+          .store-name { font-size: 48px; font-weight: bold; color: #4CAF50; }
+          .billing-address { font-size: 24px; color: #777; }
+          .pallet-label { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+          .pallet-label-b { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+          .horizontal-line { border-top: 2px solid #333; width: 50%; margin: 0 auto 20px; }
+          .footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid #ddd; margin-top: 20px; }
+          .logo { width: 120px; }
+          .company-info { text-align: left; }
+          .company-info p { margin: 2px 0; font-size: 12px; color: #555; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header"></div>
+          <div class="customer-info">
+            <div class="store-name">${customer.storeName || "N/A"}</div>
+            <div class="billing-address">${customer.billingAddress || "N/A"}, ${customer.billingCity || "N/A"}, ${customer.billingState || "N/A"}, ${customer.billingZipcode || "N/A"}</div>
+          </div>
+          <div class="pallet-label">Pallet</div>
+          <div class="pallet-label-b">____Of____</div>
+          <div class="horizontal-line"></div>
+          <div class="footer">
+            <img src="https://i.postimg.cc/QMdNcbrC/Arbora-Logo.jpg" alt="Arbora Logo" class="logo" />
+            <div class="company-info">
+              <p>Arbora</p>
+              <p>123 Paper Lane, Dhaka, Bangladesh</p>
+              <p>Phone: +880-1234-567890</p>
+              <p>Email: accounts@arbora.com</p>
+              <p>Contact: John Doe</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  // Generate PDF using the utility function
+  const pdfBuffer = await generatePdf(htmlContent);
+  return pdfBuffer;
+};
+
 export const CustomerServices = {
   createCustomerIntoDB,
   getAllCustomersFromDB,
   getSingleCustomerFromDB,
   updateCustomerIntoDB,
   deleteCustomerIntoDB,
+  sendEmailForNotPaidOrders,
+  generatePallet
 };
 
