@@ -171,6 +171,8 @@ export const createContainerIntoDB = async (payLoad: IContainer) => {
     shippingCost,
   };
 
+  console.log("container data: ", containerData)
+
   const createdContainer = await ContainerModel.create(containerData);
 
   return {
@@ -331,7 +333,6 @@ const deleteContainerIntoDB = async (id: string) => {
 const xlImportToAddContainerIntoDB = async (
   fileBuffer: Buffer,
   containerDetails: {
-    containerNumber: string;
     containerName: string;
     containerStatus?: "arrived" | "onTheWay";
     deliveryDate: string;
@@ -343,7 +344,6 @@ const xlImportToAddContainerIntoDB = async (
 
   // 2️⃣ Construct container payload using parsed items
   const containerPayload = {
-    containerNumber: containerDetails.containerNumber,
     containerName: containerDetails.containerName,
     containerStatus: containerDetails.containerStatus || "onTheWay",
     deliveryDate: containerDetails.deliveryDate,

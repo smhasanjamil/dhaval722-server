@@ -10,6 +10,7 @@ router.post(
   OrderControllers.createOrder
 );
 
+
 router.get(
   "/allOrdersPdf",
   // auth("admin"),
@@ -17,7 +18,7 @@ router.get(
 );
 
 router.get(
-  "/ordersPdf",
+  "/",
   // auth("admin"),
   OrderControllers.getAllOrders
 );

@@ -84,16 +84,16 @@ const xlImportToAddContainer = catchAsync(async (req: Request, res: Response) =>
   }
 
   // Extract additional fields
-  const { containerNumber, containerName, containerStatus, deliveryDate, shippingCost } = req.body;
+  const { containerName, containerStatus, deliveryDate, shippingCost } = req.body;
 
   // Validate as needed
-  if (!containerNumber || !containerName || !deliveryDate) {
+  if (!containerName || !deliveryDate) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Required container fields are missing');
   }
 
   const result = await ContainerServices.xlImportToAddContainerIntoDB(
     req.file.buffer,
-    { containerNumber, containerName, containerStatus, deliveryDate , shippingCost}
+    { containerName, containerStatus, deliveryDate , shippingCost}
   );
 
   sendResponse(res, {

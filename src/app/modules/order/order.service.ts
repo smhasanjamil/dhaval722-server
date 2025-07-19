@@ -810,7 +810,7 @@ const generateAllOrdersPdf = async (): Promise<Buffer> => {
           <table class="totals">
             <tr><td><strong>Subtotal:</strong></td><td>${((order.orderAmount || 0) + (order.discountGiven || 0)).toFixed(2)}</td></tr>
             <tr><td><strong>Discount:</strong></td><td>${(order.discountGiven || 0).toFixed(2)}</td></tr>
-            <tr><td><strong>Shipping Charge:</strong></td><td>${(order.shippingCharge || 0).toFixed(2)}</td></tr>
+            <tr><td><strong>Shipping Charge:</strong></td><td>${(order.shippingCharge || 0)}</td></tr>
             <tr><td><strong>Total:</strong></td><td>${(order.orderAmount || 0).toFixed(2)}</td></tr>
             <tr><td><strong>Amount Paid:</strong></td><td>${(order.paymentAmountReceived || 0).toFixed(2)}</td></tr>
             <tr><td><strong>Open Balance:</strong></td><td>${(order.openBalance || 0).toFixed(2)}</td></tr>
